@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	android:orientation="vertical"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent">
+
+	<com.google.android.material.appbar.AppBarLayout
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
+
+		<androidx.appcompat.widget.Toolbar
+			android:id="@+id/settings_toolbar"
+			android:layout_width="match_parent"
+			android:layout_height="?attr/actionBarSize"
+			app:popupTheme="@style/ThemeOverlay.AppCompat.Light"/>
+
+	</com.google.android.material.appbar.AppBarLayout>
+
+	<ScrollView
+		android:layout_width="match_parent"
+		android:layout_height="match_parent">
+
+		<LinearLayout
+			android:orientation="vertical"
+			android:layout_width="match_parent"
+			android:layout_height="match_parent">
+
+			<TextView
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:text="自制文件选择器的默认目录："
+				android:textColor="#FF000000"
+				android:textSize="20sp"
+				android:padding="10dp"/>
+
+			<LinearLayout
+				android:orientation="horizontal"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content">
+
+				<EditText
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:id="@+id/default_path"
+					android:inputType="text|textUri"
+					android:layout_weight="1.0"
+					android:hint="/storage/emulated/0"/>
+
+				<Button
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:text="检查目录"
+					android:id="@+id/check_path"/>
+
+			</LinearLayout>
+
+			<View
+				android:background="?android:attr/dividerVertical"
+				android:layout_width="match_parent"
+				android:layout_height="1dp"/>
+
+			<Switch
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:id="@+id/last_path"
+				android:text="使用上次目录作为默认目录"
+				android:padding="10dp"/>
+
+			<View
+				android:background="?android:attr/dividerVertical"
+				android:layout_width="match_parent"
+				android:layout_height="1dp"/>
+
+			<Switch
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:text="删除已转换谱面"
+				android:id="@+id/delete_converted"
+				android:paddingLeft="10dp"
+				android:paddingRight="10dp"
+				android:paddingTop="10dp"
+				android:paddingBottom="3dp"/>
+
+			<TextView
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:text="已导入谱面转换完成后将被删除"
+				android:paddingLeft="10dp"
+				android:paddingRight="10dp"
+				android:paddingBottom="10dp"/>
+
+			<View
+				android:background="?android:attr/dividerVertical"
+				android:layout_width="match_parent"
+				android:layout_height="1dp"/>
+
+			<Button
+				android:layout_width="match_parent"
+				style="?android:attr/buttonBarButtonStyle"
+				android:layout_height="wrap_content"
+				android:text="Show file list"
+				android:id="@+id/show_file_list"/>
+
+		</LinearLayout>
+
+	</ScrollView>
+
+</LinearLayout>
+

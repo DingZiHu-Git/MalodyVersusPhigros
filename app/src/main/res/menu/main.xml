@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto">
+    
+	<item
+		android:showAsAction="ifRoom|withText"
+		android:id="@+id/clear_tmp"
+		android:icon="@drawable/ic_trash_empty"
+		android:title="清空已加载谱面"/>
+	
+    <item
+        android:id="@+id/settings"
+        android:title="设置"/>
+	
+	<item
+		android:id="@+id/about"
+		android:title="关于"/>
+	
+	<item
+		android:id="@+id/update_log"
+		android:title="更新日志"/>
+    
+</menu>

@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">MalodyVersusPhigros</string>
+	<string name="crash_title">PhigrOS已崩溃</string>
+	<string name="crash_ok">复制错误信息后退出</string>
+	<string name="crash_cancel">直接退出</string>
+	<string name="about_ok">女子 口巴</string>
+	<string name="ok">确认</string>
+	<string name="cancel">取消</string>
+</resources>

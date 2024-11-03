@@ -1,0 +1,465 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:orientation="vertical"
+	android:gravity="top|center">
+
+	<com.google.android.material.appbar.AppBarLayout
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
+
+		<androidx.appcompat.widget.Toolbar
+			android:id="@+id/toolbar"
+			android:layout_width="match_parent"
+			android:layout_height="?attr/actionBarSize"
+			app:popupTheme="@style/ThemeOverlay.AppCompat.Light"/>
+
+	</com.google.android.material.appbar.AppBarLayout>
+
+	<LinearLayout
+		android:orientation="horizontal"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:gravity="center">
+
+		<ImageView
+			android:src="@drawable/malody"
+			android:layout_width="68dp"
+			android:layout_height="68dp"
+			android:padding="4dp"/>
+
+		<TextView
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text=" → "
+			android:textSize="48sp"/>
+
+		<ImageView
+			android:src="@drawable/rpe"
+			android:layout_width="68dp"
+			android:layout_height="68dp"
+			android:padding="4dp"/>
+
+	</LinearLayout>
+
+	<ScrollView
+		android:layout_width="match_parent"
+		android:layout_height="match_parent">
+
+		<LinearLayout
+			android:layout_width="match_parent"
+			android:layout_height="match_parent"
+			android:orientation="vertical"
+			android:gravity="top|center">
+
+			<LinearLayout
+				android:orientation="horizontal"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:gravity="center">
+
+				<Button
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:text="加载一张谱面……"
+					android:id="@+id/load"
+					style="?android:attr/buttonBarButtonStyle"
+					android:layout_weight="1.0"/>
+
+				<Button
+					android:layout_width="wrap_content"
+					style="?android:attr/buttonBarButtonStyle"
+					android:layout_height="wrap_content"
+					android:text="管理已加载谱面……"
+					android:id="@+id/manage_loaded_chart"
+					android:layout_weight="1.0"/>
+
+			</LinearLayout>
+
+			<View
+				android:background="?android:attr/dividerVertical"
+				android:layout_width="match_parent"
+				android:layout_height="1dp"/>
+
+			<LinearLayout
+				android:orientation="horizontal"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:gravity="center">
+
+				<Button
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:text="开始转换！"
+					android:id="@+id/convert"
+					android:layout_weight="1.0"
+					style="?android:attr/buttonBarButtonStyle"/>
+
+				<Button
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:text="Key转Slide"
+					android:layout_weight="1.0"
+					android:id="@+id/key_to_slide"
+					style="?android:attr/buttonBarButtonStyle"/>
+
+			</LinearLayout>
+
+			<View
+				android:background="?android:attr/dividerVertical"
+				android:layout_width="match_parent"
+				android:layout_height="1dp"/>
+
+			<LinearLayout
+				android:orientation="horizontal"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content">
+
+				<TextView
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:text="变速选项"
+					android:textSize="24sp"
+					android:padding="10dp"/>
+
+			</LinearLayout>
+
+			<Switch
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:text="启用BPM变速"
+				android:paddingLeft="10dp"
+				android:paddingRight="10dp"
+				android:paddingTop="10dp"
+				android:id="@+id/bpm"
+				android:paddingBottom="3dp"/>
+
+			<TextView
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:text="谱面流速根据BPM的变化而变化"
+				android:paddingLeft="10dp"
+				android:paddingRight="50dp"
+				android:paddingBottom="10dp"/>
+
+			<Switch
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:text="启用scroll变速"
+				android:paddingLeft="10dp"
+				android:paddingRight="10dp"
+				android:paddingTop="10dp"
+				android:paddingBottom="3dp"
+				android:id="@+id/scroll"/>
+
+			<TextView
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:text="转换effect中的scroll变速（不会写的去看B站）"
+				android:paddingLeft="10dp"
+				android:paddingRight="50dp"
+				android:paddingBottom="10dp"/>
+
+			<View
+				android:background="?android:attr/dividerVertical"
+				android:layout_width="match_parent"
+				android:layout_height="1dp"/>
+
+			<LinearLayout
+				android:orientation="horizontal"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content">
+
+				<TextView
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:text="Slide选项"
+					android:textSize="24sp"
+					android:padding="10dp"/>
+
+			</LinearLayout>
+
+			<Switch
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:text="启用音符宽度"
+				android:paddingLeft="10dp"
+				android:paddingRight="10dp"
+				android:paddingTop="10dp"
+				android:id="@+id/wide"
+				android:paddingBottom="3dp"/>
+
+			<TextView
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:text="转谱中将会有被拉伸的音符（横向判定范围不变）"
+				android:paddingLeft="10dp"
+				android:paddingRight="50dp"
+				android:paddingBottom="10dp"/>
+
+			<Switch
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:text="斜长条转换为移动长条（实验性）"
+				android:paddingLeft="10dp"
+				android:paddingRight="10dp"
+				android:paddingTop="10dp"
+				android:id="@+id/slide"
+				android:paddingBottom="3dp"/>
+
+			<TextView
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:text="未启用时斜长条将会被转换为直长条"
+				android:paddingLeft="10dp"
+				android:paddingRight="50dp"
+				android:paddingBottom="10dp"/>
+
+			<Switch
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:id="@+id/guide"
+				android:text="启用移动长条引导黄键（实验性）"
+				android:enabled="false"
+				android:paddingLeft="10dp"
+				android:paddingRight="10dp"
+				android:paddingTop="10dp"
+				android:paddingBottom="3dp"/>
+
+			<TextView
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:text="给转出来的移动长条配上引导黄键（建议开启）"
+				android:paddingLeft="10dp"
+				android:paddingRight="50dp"
+				android:paddingBottom="10dp"/>
+
+			<RadioGroup
+				android:orientation="horizontal"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:gravity="center">
+
+				<RadioButton
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:text="旧版引导方案"
+					android:id="@+id/guide_legacy"
+					android:layout_weight="1.0"
+					android:enabled="false"/>
+
+				<RadioButton
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:text="新版引导方案"
+					android:id="@+id/guide_new"
+					android:layout_weight="1.0"
+					android:enabled="false"/>
+
+				<CheckBox
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:text="假引导键"
+					android:id="@+id/guide_fake"
+					android:layout_weight="1.0"
+					android:checked="true"
+					android:enabled="false"/>
+
+			</RadioGroup>
+
+			<LinearLayout
+				android:orientation="horizontal"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:gravity="center">
+
+				<TextView
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:text="引导间隔："
+					android:textColor="#FF000000"
+					android:textSize="18sp"
+					android:padding="10dp"/>
+
+				<EditText
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:id="@+id/guide_interval"
+					android:text="0:1/12"
+					android:hint="0:1/12"
+					android:enabled="false"/>
+
+			</LinearLayout>
+
+			<View
+				android:background="?android:attr/dividerVertical"
+				android:layout_width="match_parent"
+				android:layout_height="1dp"/>
+
+			<LinearLayout
+				android:orientation="horizontal"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content">
+
+				<TextView
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:text="杂项"
+					android:textSize="24sp"
+					android:padding="10dp"/>
+
+			</LinearLayout>
+
+			<Switch
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:text="音符下落方向随机"
+				android:id="@+id/random_falling"
+				android:paddingTop="10dp"
+				android:paddingLeft="10dp"
+				android:paddingRight="10dp"
+				android:paddingBottom="3dp"/>
+
+			<TextView
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:text="所有音符会随机从判定线的两面下落"
+				android:paddingLeft="10dp"
+				android:paddingRight="50dp"
+				android:paddingBottom="10dp"/>
+
+			<Switch
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:text="Key：Luck模式"
+				android:paddingTop="10dp"
+				android:paddingLeft="10dp"
+				android:paddingRight="10dp"
+				android:id="@+id/luck"
+				android:paddingBottom="3dp"/>
+
+			<TextView
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:text="随机调整所有音符的轨道（警告：音符可能会重叠）"
+				android:paddingLeft="10dp"
+				android:paddingRight="50dp"
+				android:paddingBottom="10dp"/>
+
+			<LinearLayout
+				android:orientation="horizontal"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:gravity="center">
+
+				<TextView
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:text="初始速度："
+					android:textColor="#FF000000"
+					android:textSize="18sp"
+					android:padding="10dp"/>
+
+				<EditText
+					android:layout_width="match_parent"
+					android:inputType="numberDecimal"
+					android:layout_height="wrap_content"
+					android:id="@+id/speed"
+					android:text="10.0"
+					android:hint="音符流速为(120*流速)px/s"/>
+
+			</LinearLayout>
+
+			<LinearLayout
+				android:orientation="horizontal"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:gravity="center">
+
+				<TextView
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:text="判定线Y轴坐标："
+					android:textColor="#FF000000"
+					android:textSize="18sp"
+					android:padding="10dp"/>
+
+				<EditText
+					android:layout_width="match_parent"
+					android:inputType="number|numberDecimal|numberSigned"
+					android:layout_height="wrap_content"
+					android:hint="-450.0 ~ 450.0"
+					android:text="-278.1"
+					android:id="@+id/position"/>
+
+			</LinearLayout>
+
+			<LinearLayout
+				android:orientation="horizontal"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:gravity="center">
+
+				<TextView
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:text="曲绘画师："
+					android:textColor="#FF000000"
+					android:textSize="18sp"
+					android:padding="10dp"/>
+
+				<EditText
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:text="Convert by MVP"
+					android:id="@+id/illustrator"
+					android:hint="也可以自由发挥"/>
+
+			</LinearLayout>
+
+			<View
+				android:background="?android:attr/dividerVertical"
+				android:layout_width="match_parent"
+				android:layout_height="1dp"/>
+
+			<LinearLayout
+				android:orientation="vertical"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content">
+
+				<TextView
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:text="其它功能"
+					android:textSize="24sp"
+					android:padding="10dp"/>
+
+			</LinearLayout>
+
+			<Button
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:text="谱面流速工具"
+				android:id="@+id/speed_tool"/>
+
+			<View
+				android:background="?android:attr/dividerVertical"
+				android:layout_width="match_parent"
+				android:layout_height="1dp"/>
+
+			<TextView
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:text="注：除了Key、Catch、Taiko和Slide以外模式的谱面将会被跳过。Key转Slide功能和随机下落方向功能暂不支持osu!mania谱面。谱面流速工具目前只支持单谱面。想转出来Flick的话需要用Malody V在Wipe键上点一下Flick。请确保您手机预留的运行内存充足（至少1GB）！"
+				android:padding="10dp"/>
+
+		</LinearLayout>
+
+	</ScrollView>
+
+</LinearLayout>
+
