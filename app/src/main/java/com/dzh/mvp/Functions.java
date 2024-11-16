@@ -17,7 +17,9 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -35,12 +37,12 @@ public class Functions {
 			boolean lastPath = setjo.getBoolean("last_path");
 			boolean deleteConverted = setjo.getBoolean("delete_converted");
 			for (int i = 0; i < MainActivity.chartList.size(); i++){
-				if (!MainActivity.chartList.get(i).isChecked()) continue;
+				if (!((boolean) MainActivity.chartList.get(i).get("checked"))) continue;
 				int seed = Random.nextInt(10000, 99999999);
 				String name = String.valueOf(seed);
 				String type = null;
-				File file = new File(MainActivity.temp.getAbsolutePath() + File.separator + MainActivity.chartList.get(i).getText().toString().split("\n")[0]);
-				if (file.getName().endsWith(".mc")){
+				File file = new File(MainActivity.temp.getAbsolutePath() + File.separator + ((String) MainActivity.chartList.get(i).get("name")));
+				if (file.getName().toLowerCase().endsWith(".mc")){
 					if (keyToSlide){
 						File path = new File(MainActivity.temp.getAbsolutePath() + File.separator + seed);
 						if (!path.exists()) if (!path.mkdirs()) return "Error when creating temp directory: " + path.getAbsolutePath();
@@ -59,7 +61,7 @@ public class Functions {
 						if (songmeta.has("titleorg") && !songmeta.getString("titleorg").isEmpty()) name = songmeta.getString("titleorg");
 						else if (songmeta.has("title") && !songmeta.getString("title").isEmpty()) name = songmeta.getString("title");
 						String level = meta.getString("version");
-						JSONObject extra = main.getJSONObject("extra");
+						JSONObject extra = main.has("extra") ? main.getJSONObject("extra") : null;
 						File music = null;
 						File picture = null;
 						if (meta.has("background") && !meta.getString("background").isEmpty()) picture = new File(MainActivity.temp.getAbsolutePath() + File.separator + meta.getString("background"));
@@ -99,6 +101,7 @@ public class Functions {
 							}
 						}
 						jo.put("note", noteSlide).put("extra", extra);
+						if (extra != null) jo.put("extra", extra);
 						File output = new File(path.getAbsolutePath() + File.separator + file.getName());
 						copy(file, output.getAbsolutePath());
 						BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(output, false), "UTF-8"));
@@ -316,8 +319,7 @@ public class Functions {
 										}
 										int x = jo.getInt("x");
 										double positionX = (x - 128.0) / 128.0 * 675.0;
-										double size = 1.0;
-										if (jo.has("w")) size = jo.getDouble("w") / 51.0;
+										double size = wide && jo.has("w") ? jo.getDouble("w") / 51d : 1.0;
 										lines.get(0).addNote(randomFalling ? Random.nextInt(0, 1) : 1, 255, String.valueOf(ef) + ":" + es + "/" + et, 0, positionX, size, 1d, String.valueOf(sf) + ":" + ss + "/" + st, 2, 0d);
 									} else if (slide) {
 										Line hold = new Line("main");
@@ -342,8 +344,7 @@ public class Functions {
 										}
 										int x = jo.getInt("x");
 										double positionX = (x - 128.0) / 128.0 * 675.0;
-										double size = 1.0;
-										if (jo.has("w")) size = jo.getDouble("w") / 51.0;
+										double size = wide && jo.has("w") ? jo.getDouble("w") / 51d : 1.0;
 										hold.addNote(falling, 255, String.valueOf(ef) + ":" + es + "/" + et, 0, positionX, size, 1d, String.valueOf(sf) + ":" + ss + "/" + st, 2, 0d);
 										double lastPositionX = 0;
 										int lastF = sf;
@@ -412,8 +413,7 @@ public class Functions {
 										}
 										int x = jo.getInt("x");
 										double positionX = (x - 128.0) / 128.0 * 675.0;
-										double size = 1.0;
-										if (jo.has("w")) size = jo.getDouble("w") / 51.0;
+										double size = wide && jo.has("w") ? jo.getDouble("w") / 51d : 1.0;
 										lines.get(0).addNote(randomFalling ? Random.nextInt(0, 1) : 1, 255, String.valueOf(ef) + ":" + es + "/" + et, 0, positionX, wide ? size : 1d, 1d, String.valueOf(sf) + ":" + ss + "/" + st, 2, 0d);
 									}
 								} else if (jo.has("type")){
@@ -423,8 +423,7 @@ public class Functions {
 									int t = startTime.getInt(2);
 									int x = jo.getInt("x");
 									double positionX = (x - 128.0) / 128.0 * 675.0;
-									double size = 1.0;
-									if (jo.has("w")) size = jo.getDouble("w") / 51.0;
+									double size = wide && jo.has("w") ? jo.getDouble("w") / 51d : 1.0;
 									if (jo.has("dir")) lines.get(0).addNote(randomFalling ? Random.nextInt(0, 1) : 1, 255, String.valueOf(f) + ":" + s + "/" + t, 0, positionX, size, 1d, String.valueOf(f) + ":" + s + "/" + t, 3, 0d);
 									else lines.get(0).addNote(randomFalling ? Random.nextInt(0, 1) : 1, 255, String.valueOf(f) + ":" + s + "/" + t, 0, positionX, size, 1d, String.valueOf(f) + ":" + s + "/" + t, 4, 0d);
 								} else if (jo.has("dir")){
@@ -444,8 +443,7 @@ public class Functions {
 											flickPositionX = positionX + 100.0;
 											break;
 									}
-									double size = 1.0;
-									if (jo.has("w")) size = jo.getDouble("w") / 51.0;
+									double size = wide && jo.has("w") ? jo.getDouble("w") / 51d : 1.0;
 									lines.get(0).addNote(falling, 255, String.valueOf(f) + ":" + s + "/" + t, 0, positionX, size, 1d, String.valueOf(f) + ":" + s + "/" + t, 1, 0d);
 									lines.get(0).addNote(falling, 255, String.valueOf(f) + ":" + (32 / t * s + 1) + "/" + 32, 0, flickPositionX, size, 1d, String.valueOf(f) + ":" + (32 / t * s + 1) + "/" + 32, 3, 0d);
 								} else {
@@ -455,14 +453,13 @@ public class Functions {
 									int t = startTime.getInt(2);
 									int x = jo.getInt("x");
 									double positionX = (x - 128.0) / 128.0 * 675.0;
-									double size = 1.0;
-									if (jo.has("w")) size = jo.getDouble("w") / 51.0;
+									double size = wide && jo.has("w") ? jo.getDouble("w") / 51d : 1.0;
 									lines.get(0).addNote(randomFalling ? Random.nextInt(0, 1) : 1, 255, String.valueOf(f) + ":" + s + "/" + t, 0, positionX, size, 1d, String.valueOf(f) + ":" + s + "/" + t, 1, 0d);
 								}
 							}
 						}
-						for (Switch s : MainActivity.chartList) if (s.getText().toString().split("\n")[0].equalsIgnoreCase("effect.mvp") && s.isChecked()) {
-							File f = new File(MainActivity.temp.getAbsolutePath() + File.separator + s.getText().toString().split("\n")[0]);
+						for (Map<String, Object> m : MainActivity.chartList) if (((String) m.get("name")).toLowerCase().endsWith(".mvp") && ((boolean) m.get("checked"))) {
+							File f = new File(MainActivity.temp.getAbsolutePath() + File.separator + ((String) m.get("name")));
 							BufferedReader effectBr = new BufferedReader(new InputStreamReader(new FileInputStream(f), "UTF-8"));
 							String str = null;
 							int index = 0;
@@ -522,6 +519,7 @@ public class Functions {
 										boolean found = false;
 										for (Line l : lines) {
 											if (l.name.equalsIgnoreCase(args[1])) {
+												if (l.name.equalsIgnoreCase("main")) throw new InvalidObjectException("At line " + index + ": Can't add a speed event to main line");
 												found = true;
 												l.addSpeedEvent(Double.valueOf(args[2]), args[3], Double.valueOf(args[4]), args[5]);
 											}
@@ -595,9 +593,29 @@ public class Functions {
 						bw.close();
 						copy(music, path + File.separator + String.valueOf(seed) + ".ogg");
 						if (picture != null) copy(picture, path + File.separator + String.valueOf(seed) + ".png");
+						for (Map<String, Object> m : MainActivity.chartList) if (((boolean) m.get("checked")) && ((String) m.get("name")).toLowerCase().endsWith(".extra")) {
+							ZipInputStream zis = new ZipInputStream(new FileInputStream(((String) m.get("name"))));
+							ZipEntry ze = zis.getNextEntry();
+							byte[] buffer = new byte[1024 * 1024 * 8];
+							int count = 0;
+							while (ze != null) {
+								if (!ze.isDirectory()) {
+									String fn = ze.getName();
+									fn = fn.substring(fn.lastIndexOf("/") + 1);
+									File f = new File(path.getAbsolutePath() + File.separator + fn);
+									f.createNewFile();
+									FileOutputStream fos = new FileOutputStream(f);
+									while ((count = zis.read(buffer)) > 0) fos.write(buffer, 0, count);
+									fos.flush();
+									fos.close();
+								}
+								ze = zis.getNextEntry();
+							}
+							zis.close();
+						}
 						doZip(path.getAbsolutePath(), dir.getAbsolutePath() + File.separator + name.replaceAll("/", " ") + " " + type + "_" + level.replaceAll("/", " ") + ".pez");
 					}
-				} else if (file.getName().endsWith(".osu")){
+				} else if (file.getName().toLowerCase().endsWith(".osu")){
 					File path = new File(MainActivity.temp.getAbsolutePath() + File.separator + String.valueOf(seed));
 					if (!path.exists()) if (!path.mkdirs()) return "Error when creating temp directory: " + path.getAbsolutePath();
 					BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
@@ -660,6 +678,26 @@ public class Functions {
 					bw.write("#\nName: " + name + "\nPath: " + String.valueOf(seed) + "\nSong: " + String.valueOf(seed) + ".mp3\nPicture: " + String.valueOf(seed) + ".jpg\nChart: " + String.valueOf(seed) + ".json\nLevel: " + level + "\nComposer: " + composer + "\nCharter: " + charter + "\n");
 					bw.flush();
 					bw.close();
+					for (Map<String, Object> m : MainActivity.chartList) if (((boolean) m.get("checked")) && ((String) m.get("name")).toLowerCase().endsWith(".extra")) {
+						ZipInputStream zis = new ZipInputStream(new FileInputStream(((Switch) m.get("name")).getText().toString()));
+						ZipEntry ze = zis.getNextEntry();
+						byte[] buffer = new byte[1024 * 1024 * 8];
+						int count = 0;
+						while (ze != null) {
+							if (!ze.isDirectory()) {
+								String fn = ze.getName();
+								fn = fn.substring(fn.lastIndexOf("/") + 1);
+								File f = new File(path.getAbsolutePath() + File.separator + fn);
+								f.createNewFile();
+								FileOutputStream fos = new FileOutputStream(f);
+								while ((count = zis.read(buffer)) > 0) fos.write(buffer, 0, count);
+								fos.flush();
+								fos.close();
+							}
+							ze = zis.getNextEntry();
+						}
+						zis.close();
+					}
 					doZip(path.getAbsolutePath(), dir.getAbsolutePath() + File.separator + name.replaceAll("/", " ") + " osu_" + level.replaceAll("/", " ") + ".pez");
 				}
 			}

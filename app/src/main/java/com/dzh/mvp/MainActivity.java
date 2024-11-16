@@ -22,15 +22,15 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
-import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.RadioButton;
-import android.widget.ScrollView;
+import android.widget.SimpleAdapter;
 import android.widget.Switch;
-import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -50,6 +50,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.zip.ZipEntry;
@@ -68,47 +69,11 @@ public class MainActivity extends AppCompatActivity {
 	public String crash = null;
 	public ProgressDialog loading = null;
 	public static List<File> charts = new ArrayList<File>();
-	public static List<Switch> chartList = new ArrayList<Switch>();
+	public static List<Map<String, Object>> chartList = new ArrayList<Map<String, Object>>();
 	public Functions functions;
 	public void init() {
 		try {
-			for (File file : temp.listFiles()) {
-				final Switch chart = new Switch(MainActivity.this);
-				chart.setChecked(true);
-				if (file.getName().endsWith(".mc")) {
-					BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
-					String json = "";
-					String line = null;
-					while ((line = br.readLine()) != null) json += line;
-					JSONObject meta = new JSONObject(json).getJSONObject("meta");
-					String mode = "未知";
-					switch (meta.getInt("mode")) {
-						case 0:
-							mode = meta.getJSONObject("mode_ext").getInt("column") + "K";
-							break;
-						case 3:
-							mode = "Catch";
-							break;
-						case 5:
-							mode = "Taiko";
-							break;
-						case 7:
-							mode = "Slide";
-							break;
-					}
-					chart.setText(file.getName() + "\n    曲名：" + meta.getJSONObject("song").getString("title") + "\n    曲师：" + meta.getJSONObject("song").getString("artist") + "\n    模式：" + mode + "(" + meta.getInt("mode") + ")\n    难度：" + meta.getString("version") + "\n    谱师：" + meta.getString("creator"));
-					chartList.add(chart);
-				} else if (file.getName().endsWith(".osu")) {
-					chart.setText(file.getName() + "\n    osu!谱面");
-					chartList.add(chart);
-				} else if (file.getName().endsWith(".json") || file.getName().endsWith(".pec")) {
-					chart.setText(file.getName() + "\n    Phigros谱面");
-					chartList.add(chart);
-				} else if (file.getName().equalsIgnoreCase("effect.mvp")) {
-					chart.setText(file.getName() + "\n    MalodyVersusPhigros效果文件");
-					chartList.add(chart);
-				}
-			}
+			refreshChartList();
 			functions = new Functions();
 			loading = new ProgressDialog(this);
 			loading.setCancelable(false);
@@ -172,32 +137,27 @@ public class MainActivity extends AppCompatActivity {
 							Toast.makeText(MainActivity.this, "请先加载一张谱面！", Toast.LENGTH_SHORT).show();
 							return;
 						}
-						final List<Switch> newChartList = new ArrayList<Switch>();
-						for (Switch s : chartList) {
-							Switch chart = new Switch(MainActivity.this);
-							chart.setPadding(10, 0, 10, 5);
-							chart.setText(s.getText());
-							chart.setChecked(s.isChecked());
-							newChartList.add(chart);
-						}
-						ScrollView sv = new ScrollView(MainActivity.this);
-						final LinearLayout ll = new LinearLayout(MainActivity.this);
-						ll.setOrientation(LinearLayout.VERTICAL);
-						for (Switch s : newChartList) ll.addView(s);
-						sv.addView(ll);
-						AlertDialog.Builder adb = new AlertDialog.Builder(MainActivity.this);
-						adb.setIcon(R.drawable.ic_format_list_text).setTitle("管理已加载谱面").setMessage("选中一些谱面参与转换或将其删除：").setView(sv).setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+						final List<Map<String, Object>> newChartList = chartList;
+						final ListView lv = new ListView(MainActivity.this);
+						final SimpleAdapter sa = new SimpleAdapter(MainActivity.this, newChartList, R.layout.chart_manager_items, new String[]{ "properties", "name", "checked" }, new int[]{ R.id.properties, R.id.name, R.id.checked });
+						lv.setAdapter(sa);
+						lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 								@Override
-								public void onClick(DialogInterface dialogInterface, int p) {
-									chartList = newChartList;
+								public void onItemClick(AdapterView<?> adapterView, View view, int p, long p1) {
+									Switch s = view.findViewById(R.id.checked);
+									s.setChecked(!s.isChecked());
+									newChartList.get(p).put("checked", s.isChecked());
 								}
 							}
-						).setNegativeButton(R.string.cancel, null).setNeutralButton("删除已选谱面", new DialogInterface.OnClickListener() {
+						);
+						AlertDialog.Builder adb = new AlertDialog.Builder(MainActivity.this);
+						adb.setIcon(R.drawable.ic_format_list_text).setTitle("管理已加载谱面").setMessage("选中一些谱面参与转换或将其删除：").setView(lv).setPositiveButton(R.string.ok, null).setNeutralButton("删除已选谱面", new DialogInterface.OnClickListener() {
 								@Override
 								public void onClick(DialogInterface dialogInterface, int p) {
-									for (int i = 0; i < newChartList.size(); i++) {
-										if (newChartList.get(i).isChecked()) {
-											new File(temp.getAbsolutePath() + File.separator + newChartList.get(i).getText().toString().split("\n")[0]).delete();
+									for (int i = newChartList.size() - 1; i >= 0; i--) {
+										Map<String, Object> m = newChartList.get(i);
+										if ((boolean) m.get("checked")) {
+											new File(temp.getAbsolutePath() + File.separator + ((String) m.get("name"))).delete();
 											chartList.remove(i);
 										}
 									}
@@ -402,8 +362,10 @@ public class MainActivity extends AppCompatActivity {
 									@Override
 									public void onClick(DialogInterface dialog, int which) {
 										try {
-											for (File f : temp.listFiles()) {
-												if (f.getName().endsWith(".json")) {
+											for (Map<String, Object> m : chartList) {
+												Switch s = (Switch) m.get("name");
+												if (s.isChecked() && s.getText().toString().endsWith(".json")) {
+													File f = new File(temp.getAbsolutePath() + File.separator + s.getText().toString());
 													BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(f), "UTF-8"));
 													String json = "";
 													String line = null;
@@ -445,9 +407,7 @@ public class MainActivity extends AppCompatActivity {
 															js.endArray().endObject();
 														}
 														js.endArray().endObject();
-													} else if (main.has("META") && main.getJSONObject("META").has("RPEVersion")) {
-														Toast.makeText(MainActivity.this, "?🤔🤔!", Toast.LENGTH_SHORT).show();
-													}
+													} else if (main.has("META") && main.getJSONObject("META").has("RPEVersion")) {}
 													BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(f, false), "UTF-8"));
 													writer.write(js.toString());
 													writer.close();
@@ -464,6 +424,50 @@ public class MainActivity extends AppCompatActivity {
 					}
 				}
 			);
+		} catch (Exception e) {
+			catcher(e);
+		}
+	}
+	public void refreshChartList() {
+		try {
+			chartList.clear();
+			for (File file : temp.listFiles()) {
+				String name = file.getName();
+				String properties = "";
+				Map<String, Object> chart = new HashMap<String, Object>();
+				if (file.getName().toLowerCase().endsWith(".mc")) {
+					BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
+					String json = "";
+					String line = null;
+					while ((line = br.readLine()) != null) json += line;
+					JSONObject meta = new JSONObject(json).getJSONObject("meta");
+					String mode = "未知";
+					switch (meta.getInt("mode")) {
+						case 0:
+							mode = meta.getJSONObject("mode_ext").getInt("column") + "K";
+							break;
+						case 3:
+							mode = "Catch";
+							break;
+						case 5:
+							mode = "Taiko";
+							break;
+						case 7:
+							mode = "Slide";
+							break;
+					}
+					properties = "Malody谱面\n曲名：" + meta.getJSONObject("song").getString("title") + "\n曲师：" + meta.getJSONObject("song").getString("artist") + "\n模式：" + mode + "(" + meta.getInt("mode") + ")\n难度：" + meta.getString("version") + "\n谱师：" + meta.getString("creator");
+				} else if (file.getName().toLowerCase().endsWith(".osu")) properties = "osu!谱面\n暂不支持谱面信息预览";
+				else if (file.getName().toLowerCase().endsWith(".json") || file.getName().endsWith(".pec")) properties = "Phigros谱面";
+				else if (file.getName().toLowerCase().endsWith(".mvp")) properties = "MalodyVersusPhigros脚本文件";
+				else if (file.getName().toLowerCase().endsWith(".extra")) properties = "无需额外处理的文件集";
+				if (!properties.isEmpty()) {
+					chart.put("properties", properties);
+					chart.put("name", name);
+					chart.put("checked", true);
+				}
+				if (!chart.isEmpty()) chartList.add(chart);
+			}
 		} catch (Exception e) {
 			catcher(e);
 		}
@@ -535,7 +539,7 @@ public class MainActivity extends AppCompatActivity {
 				return true;
 			case R.id.about:
 				AlertDialog.Builder adb = new AlertDialog.Builder(this);
-				adb.setIcon(R.drawable.ic_launcher).setTitle(R.string.app_name).setMessage("MalodyVersusPhigros v1.5.3 by 起名钉子户\n想催更？给我的视频投114514颗币就可以啦！（被打）\n如果你想向我报告一些bug的话，请立即联系我！！！\n（因为晚一点可能就被其他人抢走了😂）");
+				adb.setIcon(R.drawable.ic_launcher).setTitle(R.string.app_name).setMessage("MalodyVersusPhigros v1.5.4 by 起名钉子户\n想催更？给我的视频投114514颗币就可以啦！（被打）\n如果你想向我报告一些bug的话，请立即联系我！！！\n（因为晚一点可能就被其他人抢走了😂）");
 				adb.setPositiveButton(R.string.about_ok, null).show();
 				return true;
 			case R.id.update_log:
@@ -565,6 +569,7 @@ public class MainActivity extends AppCompatActivity {
 						public void run() {
 							crash = load(path);
 							charts.add(new File(path));
+							refreshChartList();
 							loading.cancel();
 							runOnUiThread(new Runnable(){
 									@Override
@@ -600,55 +605,14 @@ public class MainActivity extends AppCompatActivity {
 			int count = 0;
 			while (ze != null) {
 				if (!ze.isDirectory()) {
-					String name = ze.getName();
-					name = name.substring(name.lastIndexOf("/") + 1);
-					File file = new File(temp.getAbsolutePath() + File.separator + name);
+					String fn = ze.getName();
+					fn = fn.substring(fn.lastIndexOf("/") + 1);
+					File file = new File(temp.getAbsolutePath() + File.separator + fn);
 					file.createNewFile();
 					FileOutputStream fos = new FileOutputStream(file);
 					while ((count = zis.read(buffer)) > 0) fos.write(buffer, 0, count);
 					fos.flush();
 					fos.close();
-					final Switch chart = new Switch(MainActivity.this);
-					runOnUiThread(new Runnable() {
-							@Override
-							public void run() {
-								chart.setChecked(true);
-							}
-						}
-					);
-					if (file.getName().endsWith(".mc")) {
-						BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
-						String json = "";
-						String line = null;
-						while ((line = br.readLine()) != null) json += line;
-						JSONObject meta = new JSONObject(json).getJSONObject("meta");
-						String mode = "未知";
-						switch (meta.getInt("mode")) {
-							case 0:
-								mode = meta.getJSONObject("mode_ext").getInt("column") + "K";
-								break;
-							case 3:
-								mode = "Catch";
-								break;
-							case 5:
-								mode = "Taiko";
-								break;
-							case 7:
-								mode = "Slide";
-								break;
-						}
-						chart.setText(file.getName() + "\n    曲名：" + meta.getJSONObject("song").getString("title") + "\n    曲师：" + meta.getJSONObject("song").getString("artist") + "\n    模式：" + mode + "(" + meta.getInt("mode") + ")\n    难度：" + meta.getString("version") + "\n    谱师：" + meta.getString("creator"));
-						chartList.add(chart);
-					} else if (file.getName().endsWith(".osu")) {
-						chart.setText(file.getName() + "\n    osu!谱面");
-						chartList.add(chart);
-					} else if (file.getName().endsWith(".json") || file.getName().endsWith(".pec")) {
-						chart.setText(file.getName() + "\n    Phigros谱面");
-						chartList.add(chart);
-					} else if (file.getName().equalsIgnoreCase("effect.mvp")) {
-						chart.setText(file.getName() + "\n    MalodyVersusPhigros效果文件");
-						chartList.add(chart);
-					}
 				}
 				ze = zis.getNextEntry();
 			}
