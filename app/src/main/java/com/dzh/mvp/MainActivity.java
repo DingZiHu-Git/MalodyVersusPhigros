@@ -137,7 +137,14 @@ public class MainActivity extends AppCompatActivity {
 							Toast.makeText(MainActivity.this, "请先加载一张谱面！", Toast.LENGTH_SHORT).show();
 							return;
 						}
-						final List<Map<String, Object>> newChartList = chartList;
+						final List<Map<String, Object>> newChartList = new ArrayList<Map<String, Object>>();
+						for (Map<String, Object> m : chartList) {
+							Map<String, Object> map = new HashMap<String, Object>();
+							map.put("name", m.get("name"));
+							map.put("properties", m.get("properties"));
+							map.put("checked", m.get("checked"));
+							newChartList.add(map);
+						}
 						final ListView lv = new ListView(MainActivity.this);
 						final SimpleAdapter sa = new SimpleAdapter(MainActivity.this, newChartList, R.layout.chart_manager_items, new String[]{ "properties", "name", "checked" }, new int[]{ R.id.properties, R.id.name, R.id.checked });
 						lv.setAdapter(sa);
@@ -151,7 +158,13 @@ public class MainActivity extends AppCompatActivity {
 							}
 						);
 						AlertDialog.Builder adb = new AlertDialog.Builder(MainActivity.this);
-						adb.setIcon(R.drawable.ic_format_list_text).setTitle("管理已加载谱面").setMessage("选中一些谱面参与转换或将其删除：").setView(lv).setPositiveButton(R.string.ok, null).setNeutralButton("删除已选谱面", new DialogInterface.OnClickListener() {
+						adb.setIcon(R.drawable.ic_format_list_text).setTitle("管理已加载谱面").setMessage("选中一些文件参与转换或将其删除：").setView(lv).setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+								@Override
+								public void onClick(DialogInterface dialogInterface, int p) {
+									chartList = newChartList;
+								}
+							}
+						).setNegativeButton(R.string.cancel, null).setNeutralButton("删除已选文件", new DialogInterface.OnClickListener() {
 								@Override
 								public void onClick(DialogInterface dialogInterface, int p) {
 									for (int i = newChartList.size() - 1; i >= 0; i--) {
@@ -539,7 +552,7 @@ public class MainActivity extends AppCompatActivity {
 				return true;
 			case R.id.about:
 				AlertDialog.Builder adb = new AlertDialog.Builder(this);
-				adb.setIcon(R.drawable.ic_launcher).setTitle(R.string.app_name).setMessage("MalodyVersusPhigros v1.5.4 by 起名钉子户\n想催更？给我的视频投114514颗币就可以啦！（被打）\n如果你想向我报告一些bug的话，请立即联系我！！！\n（因为晚一点可能就被其他人抢走了😂）");
+				adb.setIcon(R.drawable.ic_launcher).setTitle(R.string.app_name).setMessage("MalodyVersusPhigros v1.5.5 by 起名钉子户\n想催更？给我的视频投114514颗币就可以啦！（被打）\n如果你想向我报告一些bug的话，请立即联系我！！！\n（因为晚一点可能就被其他人抢走了😂）");
 				adb.setPositiveButton(R.string.about_ok, null).show();
 				return true;
 			case R.id.update_log:
@@ -601,7 +614,7 @@ public class MainActivity extends AppCompatActivity {
 			if (!dir.exists()) dir.mkdirs();
 			ZipInputStream zis = new ZipInputStream(new FileInputStream(path));
 			ZipEntry ze = zis.getNextEntry();
-			byte[] buffer = new byte[1024 * 1024 * 8];
+			byte[] buffer = new byte[1024 * 1024];
 			int count = 0;
 			while (ze != null) {
 				if (!ze.isDirectory()) {
@@ -642,7 +655,7 @@ public class MainActivity extends AppCompatActivity {
 			OutputStream os = null;
 			is = new FileInputStream(source);
 			os = new FileOutputStream(dest);
-			byte[] buffer = new byte[1024 * 1024 * 8];
+			byte[] buffer = new byte[1024 * 1024];
 			int length;
 			while ((length = is.read(buffer)) > 0) os.write(buffer, 0, length);
 			is.close();
@@ -675,7 +688,7 @@ public class MainActivity extends AppCompatActivity {
 			FileInputStream fis = new FileInputStream(srcFile);
 			ZipEntry ze = new ZipEntry(srcName);
 			zos.putNextEntry(ze);
-			byte[] bs = new byte[1024 * 1024 * 8];
+			byte[] bs = new byte[1024 * 1024];
 			int length;
 			while ((length = fis.read(bs)) >= 0) zos.write(bs, 0, length);
 			fis.close();

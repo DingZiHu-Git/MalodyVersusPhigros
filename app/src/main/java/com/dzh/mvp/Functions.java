@@ -519,7 +519,6 @@ public class Functions {
 										boolean found = false;
 										for (Line l : lines) {
 											if (l.name.equalsIgnoreCase(args[1])) {
-												if (l.name.equalsIgnoreCase("main")) throw new InvalidObjectException("At line " + index + ": Can't add a speed event to main line");
 												found = true;
 												l.addSpeedEvent(Double.valueOf(args[2]), args[3], Double.valueOf(args[4]), args[5]);
 											}
@@ -596,7 +595,7 @@ public class Functions {
 						for (Map<String, Object> m : MainActivity.chartList) if (((boolean) m.get("checked")) && ((String) m.get("name")).toLowerCase().endsWith(".extra")) {
 							ZipInputStream zis = new ZipInputStream(new FileInputStream(((String) m.get("name"))));
 							ZipEntry ze = zis.getNextEntry();
-							byte[] buffer = new byte[1024 * 1024 * 8];
+							byte[] buffer = new byte[1024 * 1024];
 							int count = 0;
 							while (ze != null) {
 								if (!ze.isDirectory()) {
@@ -681,7 +680,7 @@ public class Functions {
 					for (Map<String, Object> m : MainActivity.chartList) if (((boolean) m.get("checked")) && ((String) m.get("name")).toLowerCase().endsWith(".extra")) {
 						ZipInputStream zis = new ZipInputStream(new FileInputStream(((Switch) m.get("name")).getText().toString()));
 						ZipEntry ze = zis.getNextEntry();
-						byte[] buffer = new byte[1024 * 1024 * 8];
+						byte[] buffer = new byte[1024 * 1024];
 						int count = 0;
 						while (ze != null) {
 							if (!ze.isDirectory()) {
@@ -727,7 +726,7 @@ public class Functions {
 			OutputStream os = null;
 			is = new FileInputStream(source);
 			os = new FileOutputStream(dest);
-			byte[] buffer = new byte[1024 * 1024 * 8];
+			byte[] buffer = new byte[1024 * 1024];
 			int length;
 			while ((length = is.read(buffer)) > 0) os.write(buffer, 0, length);
 			is.close();
@@ -753,7 +752,7 @@ public class Functions {
 			FileInputStream fis = new FileInputStream(srcFile);
 			ZipEntry ze = new ZipEntry(srcName);
 			zos.putNextEntry(ze);
-			byte[] bs = new byte[1024 * 1024 * 8];
+			byte[] bs = new byte[1024 * 1024];
 			int length;
 			while ((length = fis.read(bs)) >= 0) zos.write(bs, 0, length);
 			fis.close();
