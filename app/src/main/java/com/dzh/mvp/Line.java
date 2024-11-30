@@ -24,6 +24,7 @@ public class Line extends Object {
 	public JSONArray notes;
 	public String name;
 	public int numOfNotes;
+	public int[] occupy;
 	public Line(String lineName) {
 		init = false;
 		main = new JSONObject();
@@ -42,6 +43,7 @@ public class Line extends Object {
 		notes = new JSONArray();
 		name = lineName;
 		numOfNotes = 0;
+		occupy = new int[]{ 0, 0, 1 };
 	}
 	private void sortAll() {
 		try {

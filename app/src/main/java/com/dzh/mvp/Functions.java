@@ -31,6 +31,7 @@ public class Functions {
 		try {
 			List<Line> lines = new ArrayList<Line>();
 			lines.add(new Line("main").init(255, 0d, position, 0d, speed));
+			lines.get(0).occupy = new int[]{ 9999999, 0, 1 };
 			BufferedReader setbr = new BufferedReader(new InputStreamReader(new FileInputStream(MainActivity.settings), "UTF-8"));
 			JSONObject setjo = new JSONObject(setbr.readLine());
 			String defaultPath = setjo.getString("default_path");
@@ -322,8 +323,7 @@ public class Functions {
 										double size = wide && jo.has("w") ? jo.getDouble("w") / 51d : 1.0;
 										lines.get(0).addNote(randomFalling ? Random.nextInt(0, 1) : 1, 255, String.valueOf(ef) + ":" + es + "/" + et, 0, positionX, size, 1d, String.valueOf(sf) + ":" + ss + "/" + st, 2, 0d);
 									} else if (slide) {
-										Line hold = new Line("main");
-										hold.init(0, 0d, 0d, 0d, speed);
+										Line hold = new Line("main").init(0, 0d, 0d, 0d, speed);
 										hold.father = 0;
 										int falling = randomFalling ? Random.nextInt(0, 1) : 1;
 										JSONArray endTime = seg.getJSONObject(seg.length() - 1).getJSONArray("beat");
@@ -341,6 +341,14 @@ public class Functions {
 										while (es >= et) {
 											es = es - et;
 											ef++;
+										}
+										List<Double[]> timeTemp = new ArrayList<Double[]>();
+										for (int k = 1; k < time.length(); k++) {
+											JSONArray lastBeat = time.getJSONObject(k - 1).getJSONArray("beat");
+											JSONArray currentBeat = time.getJSONObject(k).getJSONArray("beat");
+											if (currentBeat.getInt(0) + currentBeat.getInt(1) / Double.valueOf(currentBeat.getInt(2)) >= sf + ss / Double.valueOf(st)) {
+												
+											}
 										}
 										int x = jo.getInt("x");
 										double positionX = (x - 128.0) / 128.0 * 675.0;

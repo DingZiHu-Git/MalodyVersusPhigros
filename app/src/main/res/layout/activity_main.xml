@@ -35,8 +35,10 @@
 		<TextView
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
-			android:text=" → "
-			android:textSize="48sp"/>
+			android:text="→"
+			android:textAppearance="?android:attr/textAppearanceLarge"
+			android:padding="10dp"
+			android:textSize="36sp"/>
 
 		<ImageView
 			android:src="@drawable/rpe"
@@ -123,7 +125,7 @@
 					android:layout_width="wrap_content"
 					android:layout_height="wrap_content"
 					android:text="变速选项"
-					android:textSize="24sp"
+					android:textAppearance="?android:attr/textAppearanceLarge"
 					android:padding="10dp"/>
 
 			</LinearLayout>
@@ -178,7 +180,7 @@
 					android:layout_width="wrap_content"
 					android:layout_height="wrap_content"
 					android:text="Slide选项"
-					android:textSize="24sp"
+					android:textAppearance="?android:attr/textAppearanceLarge"
 					android:padding="10dp"/>
 
 			</LinearLayout>
@@ -200,6 +202,26 @@
 				android:paddingLeft="10dp"
 				android:paddingRight="50dp"
 				android:paddingBottom="10dp"/>
+
+			<LinearLayout
+				android:orientation="horizontal"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:gravity="left|center">
+
+				<TextView
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:text="斜长条处理方式："
+					android:textAppearance="?android:attr/textAppearanceLarge"
+					android:textSize="14sp"
+					android:paddingLeft="10dp"/>
+
+				<Spinner
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"/>
+
+			</LinearLayout>
 
 			<Switch
 				android:layout_width="match_parent"
@@ -223,7 +245,7 @@
 				android:layout_width="match_parent"
 				android:layout_height="wrap_content"
 				android:id="@+id/guide"
-				android:text="启用移动长条引导黄键（实验性）"
+				android:text="启用移动长条引导Drag（实验性）"
 				android:enabled="false"
 				android:paddingLeft="10dp"
 				android:paddingRight="10dp"
@@ -233,7 +255,7 @@
 			<TextView
 				android:layout_width="match_parent"
 				android:layout_height="wrap_content"
-				android:text="给转出来的移动长条配上引导黄键（建议开启）"
+				android:text="给转出来的移动长条配上引导Drag（建议开启）"
 				android:paddingLeft="10dp"
 				android:paddingRight="50dp"
 				android:paddingBottom="10dp"/>
@@ -280,10 +302,10 @@
 				<TextView
 					android:layout_width="wrap_content"
 					android:layout_height="wrap_content"
-					android:text="引导间隔："
-					android:textColor="#FF000000"
-					android:textSize="18sp"
-					android:padding="10dp"/>
+					android:text="Drag间隔："
+					android:textAppearance="?android:attr/textAppearanceLarge"
+					android:textSize="14sp"
+					android:paddingLeft="10dp"/>
 
 				<EditText
 					android:layout_width="match_parent"
@@ -309,7 +331,7 @@
 					android:layout_width="wrap_content"
 					android:layout_height="wrap_content"
 					android:text="杂项"
-					android:textSize="24sp"
+					android:textAppearance="?android:attr/textAppearanceLarge"
 					android:padding="10dp"/>
 
 			</LinearLayout>
@@ -360,9 +382,9 @@
 					android:layout_width="wrap_content"
 					android:layout_height="wrap_content"
 					android:text="初始速度："
-					android:textColor="#FF000000"
-					android:textSize="18sp"
-					android:padding="10dp"/>
+					android:textAppearance="?android:attr/textAppearanceLarge"
+					android:textSize="14sp"
+					android:paddingLeft="10dp"/>
 
 				<EditText
 					android:layout_width="match_parent"
@@ -384,9 +406,9 @@
 					android:layout_width="wrap_content"
 					android:layout_height="wrap_content"
 					android:text="判定线Y轴坐标："
-					android:textColor="#FF000000"
-					android:textSize="18sp"
-					android:padding="10dp"/>
+					android:textAppearance="?android:attr/textAppearanceLarge"
+					android:textSize="14sp"
+					android:paddingLeft="10dp"/>
 
 				<EditText
 					android:layout_width="match_parent"
@@ -408,9 +430,9 @@
 					android:layout_width="wrap_content"
 					android:layout_height="wrap_content"
 					android:text="曲绘画师："
-					android:textColor="#FF000000"
-					android:textSize="18sp"
-					android:padding="10dp"/>
+					android:textAppearance="?android:attr/textAppearanceLarge"
+					android:textSize="14sp"
+					android:paddingLeft="10dp"/>
 
 				<EditText
 					android:layout_width="match_parent"
@@ -434,8 +456,8 @@
 				<TextView
 					android:layout_width="wrap_content"
 					android:layout_height="wrap_content"
-					android:text="其它功能"
-					android:textSize="24sp"
+					android:text="其他功能"
+					android:textAppearance="?android:attr/textAppearanceLarge"
 					android:padding="10dp"/>
 
 			</LinearLayout>
@@ -454,7 +476,7 @@
 			<TextView
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
-				android:text="注：除了Key、Catch、Taiko和Slide以外模式的谱面将会被跳过。Key转Slide功能和随机下落方向功能暂不支持osu!mania谱面。谱面流速工具目前只支持单谱面。想转出来Flick的话需要用Malody V在Wipe键上点一下Flick。请确保您手机预留的运行内存充足（至少1GB）！"
+				android:text="注：除了Key、Catch、Taiko和Slide以外模式的谱面将会被跳过。Key转Slide功能和随机下落方向功能暂不支持osu!mania谱面。想转出来Flick的话需要用Malody V在Wipe键上点一下Flick。请确保您手机预留的运行内存充足（至少1GB）！"
 				android:padding="10dp"/>
 
 		</LinearLayout>
