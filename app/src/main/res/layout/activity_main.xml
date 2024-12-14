@@ -212,34 +212,17 @@
 				<TextView
 					android:layout_width="wrap_content"
 					android:layout_height="wrap_content"
-					android:text="斜长条处理方式："
+					android:text="斜长条转换为："
 					android:textAppearance="?android:attr/textAppearanceLarge"
 					android:textSize="14sp"
 					android:paddingLeft="10dp"/>
 
 				<Spinner
 					android:layout_width="wrap_content"
-					android:layout_height="wrap_content"/>
+					android:layout_height="wrap_content"
+					android:id="@+id/slide"/>
 
 			</LinearLayout>
-
-			<Switch
-				android:layout_width="match_parent"
-				android:layout_height="wrap_content"
-				android:text="斜长条转换为移动长条（实验性）"
-				android:paddingLeft="10dp"
-				android:paddingRight="10dp"
-				android:paddingTop="10dp"
-				android:id="@+id/slide"
-				android:paddingBottom="3dp"/>
-
-			<TextView
-				android:layout_width="match_parent"
-				android:layout_height="wrap_content"
-				android:text="未启用时斜长条将会被转换为直长条"
-				android:paddingLeft="10dp"
-				android:paddingRight="50dp"
-				android:paddingBottom="10dp"/>
 
 			<Switch
 				android:layout_width="match_parent"
@@ -259,39 +242,6 @@
 				android:paddingLeft="10dp"
 				android:paddingRight="50dp"
 				android:paddingBottom="10dp"/>
-
-			<RadioGroup
-				android:orientation="horizontal"
-				android:layout_width="match_parent"
-				android:layout_height="wrap_content"
-				android:gravity="center">
-
-				<RadioButton
-					android:layout_width="wrap_content"
-					android:layout_height="wrap_content"
-					android:text="旧版引导方案"
-					android:id="@+id/guide_legacy"
-					android:layout_weight="1.0"
-					android:enabled="false"/>
-
-				<RadioButton
-					android:layout_width="wrap_content"
-					android:layout_height="wrap_content"
-					android:text="新版引导方案"
-					android:id="@+id/guide_new"
-					android:layout_weight="1.0"
-					android:enabled="false"/>
-
-				<CheckBox
-					android:layout_width="wrap_content"
-					android:layout_height="wrap_content"
-					android:text="假引导键"
-					android:id="@+id/guide_fake"
-					android:layout_weight="1.0"
-					android:checked="true"
-					android:enabled="false"/>
-
-			</RadioGroup>
 
 			<LinearLayout
 				android:orientation="horizontal"

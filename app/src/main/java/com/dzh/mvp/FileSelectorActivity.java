@@ -8,6 +8,8 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.TextView;
@@ -15,14 +17,9 @@ import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import com.dzh.mvp.R;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -30,143 +27,98 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.json.JSONObject;
-import org.json.JSONStringer;
 
 public class FileSelectorActivity extends AppCompatActivity {
-	public File settings;
-	public File directory;
-	public List<Map<String, Object>> listItems;
-	List<File> items;
-	SimpleAdapter listAdapter;
+	private File dir;
+	private List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
 	@Override
-	protected void onCreate(Bundle savedInstanceState){
+	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_file_selector);
-		Toolbar toolbar = findViewById(R.id.file_selector_toolbar);
+		Toolbar toolbar = findViewById(R.id.toolbar_file_selector);
 		setSupportActionBar(toolbar);
 		try {
-			settings = new File("/data/data/" + getPackageName() + "/files/settings.json");
-			BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(settings), "UTF-8"));
-			final JSONObject jo = new JSONObject(br.readLine());
-			directory = new File(jo.getString("default_path"));
-			final boolean deleteConverted = jo.getBoolean("delete_converted");
-			final int speed = jo.getInt("speed");
-			final boolean wide = jo.getBoolean("wide");
-			final boolean slide = jo.getBoolean("slide");
-			final int guide = jo.getInt("guide");
-			final boolean guideFake = jo.getBoolean("guide_fake");
-			final String guideInterval = jo.getString("interval");
-			final boolean randomFalling = jo.getBoolean("random_falling");
-			final boolean luck = jo.getBoolean("luck");
-			final double defaultSpeed = jo.getDouble("default_speed");
-			final double defaultPosition = jo.getDouble("default_position");
-			final TextView dir = findViewById(R.id.dir);
-			dir.setText(directory.getAbsolutePath());
-			listItems = new ArrayList<Map<String, Object>>();
-			items = sortFile(directory.listFiles());
-			for (File file : items){
-				Map<String, Object> map = new HashMap<String, Object>();
-				if (file.isDirectory()) map.put("image", R.drawable.ic_folder_outline);
-				else {
-					if (file.getName().endsWith(".zip") || file.getName().endsWith(".mcz") || file.getName().endsWith(".osz") || file.getName().endsWith(".pez")) map.put("image", R.drawable.ic_compressed_file_outline);
-					else map.put("image", R.drawable.ic_file_outline);
-				}
-				map.put("title", file.getName());
-				listItems.add(map);
-			}
-			listAdapter = new SimpleAdapter(this, listItems, R.layout.file_selector_items, new String[]{ "title", "image" }, new int[]{ R.id.title, R.id.image });
-			ListView list = findViewById(R.id.list);
-			list.setAdapter(listAdapter);
-			list.setOnItemClickListener(new AdapterView.OnItemClickListener(){
+			dir = new File(getIntent().getStringExtra("path"));
+			final ImageButton lastDirectory = findViewById(R.id.last_directory);
+			final TextView directory = findViewById(R.id.directory);
+			ListView fileList = findViewById(R.id.file_list);
+			refreshFileList();
+			final SimpleAdapter fileListAdapter = new SimpleAdapter(this, list, R.layout.file_selector_items, new String[]{ "icon", "title" }, new int[]{ R.id.file_selector_items_icon, R.id.file_selector_items_title });
+			lastDirectory.setOnClickListener(new View.OnClickListener() {
 					@Override
-					public void onItemClick(AdapterView<?> parent, View view, int position, long id){
-						if (items.get(position).isDirectory()){
-							directory = items.get(position);
-							dir.setText(directory.getAbsolutePath());
-							listItems.clear();
-							items = sortFile(directory.listFiles());
-							for (File file : items){
-								Map<String, Object> map = new HashMap<String, Object>();
-								if (file.isDirectory()) map.put("image", R.drawable.ic_folder_outline);
-								else {
-									if (file.getName().endsWith(".zip") || file.getName().endsWith(".mcz") || file.getName().endsWith(".osz") || file.getName().endsWith(".pez")) map.put("image", R.drawable.ic_compressed_file_outline);
-									else map.put("image", R.drawable.ic_file_outline);
-								}
-								map.put("title", file.getName());
-								listItems.add(map);
-							}
-							listAdapter.notifyDataSetChanged();
-						} else if (items.get(position).getName().endsWith(".zip") || items.get(position).getName().endsWith(".mcz") || items.get(position).getName().endsWith(".osz") || items.get(position).getName().endsWith(".pez")){
-							try {
-								if (jo.getBoolean("last_path")){
-									JSONStringer js = new JSONStringer();
-									BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(settings, false), "UTF-8"));
-									js.object().key("default_path").value(directory.getAbsolutePath()).key("last_path").value(true).key("delete_converted").value(deleteConverted).key("speed").value(speed).key("wide").value(wide).key("slide").value(slide).key("guide").value(guide).key("guide_fake").value(guideFake).key("interval").value(guideInterval).key("random_falling").value(randomFalling).key("luck").value(luck).key("default_speed").value(defaultSpeed).key("default_position").value(defaultPosition).endObject();
-									bw.write(js.toString());
-									bw.close();
-								}
-							} catch (Exception e){
-								catcher(e);
-							}
-							setResult(RESULT_OK, new Intent().putExtra("path", items.get(position).getAbsolutePath()));
-							finish();
-						} else Toast.makeText(FileSelectorActivity.this, "请选择一张Malody谱面文件（.mcz或.zip）或Phigros谱面文件（.pez或.zip）！", Toast.LENGTH_LONG).show();
+					public void onClick(View view) {
+						if (!dir.getAbsolutePath().equals("/storage/emulated/0")) dir = dir.getParentFile();
+						directory.setText(dir.getAbsolutePath());
+						refreshFileList();
+						fileListAdapter.notifyDataSetChanged();
 					}
 				}
 			);
-		} catch (Exception e){
+			directory.setText(dir.getAbsolutePath());
+			directory.setOnClickListener(new View.OnClickListener() {
+					@Override
+					public void onClick(View view) {
+						final EditText et = new EditText(FileSelectorActivity.this);
+						et.setText(directory.getText());
+						et.selectAll();
+						AlertDialog.Builder adb = new AlertDialog.Builder(FileSelectorActivity.this);
+						adb.setIcon(R.drawable.ic_form_textbox).setTitle("跳转到……").setView(et).setPositiveButton("确定", new DialogInterface.OnClickListener() {
+								@Override
+								public void onClick(DialogInterface dialogInterface, int p) {
+									if (new File(et.getText().toString()).exists() && new File(et.getText().toString()).getAbsolutePath().startsWith("/storage/emulated/0")) dir = new File(et.getText().toString());
+									else Toast.makeText(FileSelectorActivity.this, "目录不存在或无法访问", Toast.LENGTH_SHORT).show();
+									directory.setText(dir.getAbsolutePath());
+									refreshFileList();
+									fileListAdapter.notifyDataSetChanged();
+								}
+							}
+						).setNegativeButton("取消", null).setCancelable(false).show();
+					}
+				}
+			);
+			fileList.setAdapter(fileListAdapter);
+			fileList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+					@Override
+					public void onItemClick(AdapterView<?> adapterView, View view, int p, long p1) {
+						if (sortFile(dir.listFiles()).get(p).isDirectory()) {
+							dir = sortFile(dir.listFiles()).get(p);
+							directory.setText(dir.getAbsolutePath());
+							refreshFileList();
+							fileListAdapter.notifyDataSetChanged();
+						} else {
+							Intent data = new Intent();
+							data.putExtra("path", sortFile(dir.listFiles()).get(p).getAbsolutePath());
+							setResult(RESULT_OK, data);
+							finish();
+						}
+					}
+				}
+			);
+		} catch (Exception e) {
 			catcher(e);
 		}
 	}
-	public void catcher(final Exception e){
-		AlertDialog.Builder adb = new AlertDialog.Builder(this);
-		adb.setIcon(android.R.drawable.ic_delete);
-		adb.setTitle(R.string.crash_title);
-		adb.setMessage(e.toString());
-		adb.setPositiveButton(R.string.crash_ok, new DialogInterface.OnClickListener(){
-				@Override
-				public void onClick(DialogInterface p1, int p2){
-					ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-					ClipData cd = ClipData.newPlainText("Error message from MalodyVersusPhigros by DingZiHu", e.toString());
-					cm.setPrimaryClip(cd);
-					finish();
-				}
+	private void refreshFileList() {
+		try {
+			list.clear();
+			for (File f : sortFile(dir.listFiles())) {
+				Map<String, Object> item = new HashMap<String, Object>();
+				String name = f.getName().toLowerCase();
+				if (f.isDirectory()) item.put("icon", R.drawable.ic_folder_outline);
+				else if (name.endsWith(".zip") || name.endsWith(".rar") || name.endsWith(".7z") || name.endsWith(".tar") || name.endsWith(".gz")) item.put("icon", R.drawable.ic_compressed_file_outline);
+				else if (name.endsWith(".txt")) item.put("icon", R.drawable.ic_file_document_outline);
+				else if (name.endsWith(".png") || name.endsWith(".jpg") || name.endsWith(".jpeg") || name.endsWith(".gif")) item.put("icon", R.drawable.ic_file_image_outline);
+				else if (name.endsWith(".mp3") || name.endsWith(".ogg") || name.endsWith(".flac") || name.endsWith(".wav") || name.endsWith(".m4a")) item.put("icon", R.drawable.ic_file_music_outline);
+				else if (name.endsWith(".mp4") || name.endsWith(".m4v")) item.put("icon", R.drawable.ic_file_video_outline);
+				else item.put("icon", R.drawable.ic_file_outline);
+				item.put("title", f.getName());
+				list.add(item);
 			}
-		);
-		adb.setNegativeButton(R.string.crash_cancel, new DialogInterface.OnClickListener(){
-				@Override
-				public void onClick(DialogInterface p1, int p2){
-					finish();
-				}
-			}
-		);
-		adb.show();
-	}
-	@Override
-	public void onBackPressed(){
-		if (!directory.getAbsolutePath().equals("/storage/emulated/0")){
-			directory = directory.getParentFile();
-			TextView dir = findViewById(R.id.dir);
-			dir.setText(directory.getAbsolutePath());
-			listItems.clear();
-			items = sortFile(directory.listFiles());
-			for (File file : items){
-				Map<String, Object> map = new HashMap<String, Object>();
-				if (file.isDirectory()) map.put("image", R.drawable.ic_folder_outline);
-				else {
-					if (file.getName().endsWith(".zip") || file.getName().endsWith(".mcz") || file.getName().endsWith(".osz") || file.getName().endsWith(".pez")) map.put("image", R.drawable.ic_compressed_file_outline);
-					else map.put("image", R.drawable.ic_file_outline);
-				}
-				map.put("title", file.getName());
-				listItems.add(map);
-			}
-			listAdapter.notifyDataSetChanged();
-			return;
+		} catch (Exception e) {
+			catcher(e);
 		}
-		super.onBackPressed();
 	}
-	public List<File> sortFile(File[] array){
+	private List<File> sortFile(File[] array){
 		List<File> file = Arrays.asList(array);
 		Collections.sort(file, new Comparator<File>(){
 				@Override
@@ -178,5 +130,26 @@ public class FileSelectorActivity extends AppCompatActivity {
 			}
 		);
 		return file;
+	}
+	private void catcher(final Exception e) {
+		final StringWriter sw = new StringWriter();
+		e.printStackTrace(new PrintWriter(sw, true));
+		AlertDialog.Builder adb = new AlertDialog.Builder(this);
+		adb.setIcon(android.R.drawable.ic_delete).setTitle("PhigrOS已崩溃").setMessage(sw.toString()).setPositiveButton("复制错误信息后退出", new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface p1, int p2) {
+					ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+					ClipData cd = ClipData.newPlainText("Error message from MalodyVersusPhigros by DingZiHu", sw.toString());
+					cm.setPrimaryClip(cd);
+					finish();
+				}
+			}
+		).setNegativeButton("直接退出", new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface p1, int p2) {
+					finish();
+				}
+			}
+		).setCancelable(false).show();
 	}
 }

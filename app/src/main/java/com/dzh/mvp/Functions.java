@@ -27,15 +27,11 @@ import org.json.JSONStringer;
 
 public class Functions {
 	public File dir = new File("/storage/emulated/0/data/MVP");
-	public String convert(final boolean keyToSlide, final boolean bpm, final boolean scroll, final boolean wide, final boolean slide, final int guide, final boolean fake, final Integer[] interval, final boolean randomFalling, final boolean luck, final double speed, final double position, final String illustrator){
+	public String convert(boolean keyToSlide, boolean bpm, boolean scroll, boolean wide, int slide, boolean guide, String guideInterval, boolean randomFalling, boolean luck, double speed, double position, String illustrator){
 		try {
-			List<Line> lines = new ArrayList<Line>();
-			lines.add(new Line("main").init(255, 0d, position, 0d, speed));
-			lines.get(0).occupy = new int[]{ 9999999, 0, 1 };
+			final Integer[] interval = new Integer[]{ Integer.valueOf(guideInterval.substring(0, guideInterval.indexOf(":"))), Integer.valueOf(guideInterval.substring(guideInterval.indexOf(":") + 1, guideInterval.indexOf("/"))), Integer.valueOf(guideInterval.substring(guideInterval.indexOf("/") + 1)) };
 			BufferedReader setbr = new BufferedReader(new InputStreamReader(new FileInputStream(MainActivity.settings), "UTF-8"));
 			JSONObject setjo = new JSONObject(setbr.readLine());
-			String defaultPath = setjo.getString("default_path");
-			boolean lastPath = setjo.getBoolean("last_path");
 			boolean deleteConverted = setjo.getBoolean("delete_converted");
 			for (int i = 0; i < MainActivity.chartList.size(); i++){
 				if (!((boolean) MainActivity.chartList.get(i).get("checked"))) continue;
@@ -151,6 +147,9 @@ public class Functions {
 							fos.close();
 						}
 						final JSONObject ct = new JSONObject();
+						List<Line> lines = new ArrayList<Line>();
+						lines.add(new Line("main").init(255, 0d, position, 0d, speed));
+						lines.get(0).occupy = new int[]{ 9999999, 0, 1 };
 						int mode = meta.getInt("mode");
 						JSONArray bpmList = new JSONArray();
 						for (int j = 0; j < time.length(); j++) bpmList.put(new JSONObject().put("bpm", time.getJSONObject(j).getDouble("bpm")).put("startTime", new JSONArray().put(time.getJSONObject(j).getJSONArray("beat").getInt(0)).put(time.getJSONObject(j).getJSONArray("beat").getInt(1)).put(time.getJSONObject(j).getJSONArray("beat").getInt(2))));
@@ -301,7 +300,7 @@ public class Functions {
 								if (jo.has("sound")) music = new File(MainActivity.temp.getPath() + File.separator + jo.getString("sound"));
 								else if (jo.has("seg")) {
 									JSONArray seg = jo.getJSONArray("seg");
-									if (seg.length() == 1 && (!seg.getJSONObject(0).has("x") || seg.getJSONObject(0).getInt("x") == 0)) {
+									if (slide == 0 || (seg.length() == 1 && (!seg.getJSONObject(0).has("x") || seg.getJSONObject(0).getInt("x") == 0))) {
 										JSONArray endTime = seg.getJSONObject(seg.length() - 1).getJSONArray("beat");
 										JSONArray startTime = jo.getJSONArray("beat");
 										int ef = endTime.getInt(0);
@@ -322,9 +321,12 @@ public class Functions {
 										double positionX = (x - 128.0) / 128.0 * 675.0;
 										double size = wide && jo.has("w") ? jo.getDouble("w") / 51d : 1.0;
 										lines.get(0).addNote(randomFalling ? Random.nextInt(0, 1) : 1, 255, String.valueOf(ef) + ":" + es + "/" + et, 0, positionX, size, 1d, String.valueOf(sf) + ":" + ss + "/" + st, 2, 0d);
-									} else if (slide) {
-										Line hold = new Line("main").init(0, 0d, 0d, 0d, speed);
-										hold.father = 0;
+									} else if (slide == 1 || slide == 2) {
+										Line hold = null;
+										if (slide == 2) {
+											hold = new Line("main").init(0, 0d, 0d, 0d, speed);
+											hold.father = 0;
+										}
 										int falling = randomFalling ? Random.nextInt(0, 1) : 1;
 										JSONArray endTime = seg.getJSONObject(seg.length() - 1).getJSONArray("beat");
 										JSONArray startTime = jo.getJSONArray("beat");
@@ -342,18 +344,11 @@ public class Functions {
 											es = es - et;
 											ef++;
 										}
-										List<Double[]> timeTemp = new ArrayList<Double[]>();
-										for (int k = 1; k < time.length(); k++) {
-											JSONArray lastBeat = time.getJSONObject(k - 1).getJSONArray("beat");
-											JSONArray currentBeat = time.getJSONObject(k).getJSONArray("beat");
-											if (currentBeat.getInt(0) + currentBeat.getInt(1) / Double.valueOf(currentBeat.getInt(2)) >= sf + ss / Double.valueOf(st)) {
-												
-											}
-										}
 										int x = jo.getInt("x");
 										double positionX = (x - 128.0) / 128.0 * 675.0;
 										double size = wide && jo.has("w") ? jo.getDouble("w") / 51d : 1.0;
-										hold.addNote(falling, 255, String.valueOf(ef) + ":" + es + "/" + et, 0, positionX, size, 1d, String.valueOf(sf) + ":" + ss + "/" + st, 2, 0d);
+										if (slide == 1) lines.get(0).addNote(falling, 255, String.valueOf(sf) + ":" + ss + "/" + st, 0, positionX, wide ? size : 1d, 1d, String.valueOf(sf) + ":" + ss + "/" + st, 1, 0d);
+										else hold.addNote(falling, 255, String.valueOf(ef) + ":" + es + "/" + et, 0, positionX, size, 1d, String.valueOf(sf) + ":" + ss + "/" + st, 2, 0d);
 										double lastPositionX = 0;
 										int lastF = sf;
 										int lastS = ss;
@@ -376,32 +371,29 @@ public class Functions {
 												moveF++;
 											}
 											double movePositionX = moveX / 128.0 * 675.0;
-											switch (guide) {
-												case 1:
-													lines.get(0).addNote(falling, fake ? 128 : 255, String.valueOf(moveF) + ":" + moveS + "/" + moveT, fake ? 1 : 0, positionX + movePositionX, wide ? size : 1d, 1d, String.valueOf(moveF) + ":" + moveS + "/" + moveT, 4, 0d);
-													break;
-												case 2:
-													double v = (movePositionX - lastPositionX) / ((moveF + moveS / Double.valueOf(moveT)) - (lastF + lastS / Double.valueOf(lastT)));
-													while ((currentF + currentS / Double.valueOf(currentT)) + (interval[0] + interval[1] / Double.valueOf(interval[2])) <= moveF + moveS / Double.valueOf(moveT)){
-														String[] current = fractionAddition(String.valueOf(currentS) + "/" + String.valueOf(currentT) + "+" + String.valueOf(interval[0] * interval[2] + interval[1]) + "/" + String.valueOf(interval[2])).split("/");
-														currentS = Integer.valueOf(current[0]);
-														currentT = Integer.valueOf(current[1]);
-														while (currentS >= currentT){
-															currentS = currentS - currentT;
-															currentF++;
-														}
-														lines.get(0).addNote(falling, fake ? 128 : 255, String.valueOf(currentF) + ":" + currentS + "/" + currentT, fake ? 1 : 0, positionX + lastPositionX + v * ((currentF + currentS / Double.valueOf(currentT)) - (lastF + lastS / Double.valueOf(lastT))), wide ? size : 1d, 1d, String.valueOf(currentF) + ":" + currentS + "/" + currentT, 4, 0d);
+											if (slide == 1 || (slide == 2 && guide)) {
+												double v = (movePositionX - lastPositionX) / ((moveF + moveS / Double.valueOf(moveT)) - (lastF + lastS / Double.valueOf(lastT)));
+												while ((currentF + currentS / Double.valueOf(currentT)) + (interval[0] + interval[1] / Double.valueOf(interval[2])) <= moveF + moveS / Double.valueOf(moveT)){
+													String[] current = fractionAddition(String.valueOf(currentS) + "/" + String.valueOf(currentT) + "+" + String.valueOf(interval[0] * interval[2] + interval[1]) + "/" + String.valueOf(interval[2])).split("/");
+													currentS = Integer.valueOf(current[0]);
+													currentT = Integer.valueOf(current[1]);
+													while (currentS >= currentT){
+														currentS = currentS - currentT;
+														currentF++;
 													}
-													break;
+													lines.get(0).addNote(falling, slide == 1 ? 255 : 128, String.valueOf(currentF) + ":" + currentS + "/" + currentT, slide == 1 ? 0 : 1, positionX + lastPositionX + v * ((currentF + currentS / Double.valueOf(currentT)) - (lastF + lastS / Double.valueOf(lastT))), wide ? size : 1d, 1d, String.valueOf(currentF) + ":" + currentS + "/" + currentT, 4, 0d);
+												}
 											}
-											hold.addMoveXEvent(1, 1, movePositionX, String.valueOf(moveF) + ":" + moveS + "/" + moveT, lastPositionX, String.valueOf(lastF) + ":" + lastS + "/" + lastT);
+											if (slide == 2) hold.addMoveXEvent(1, 1, movePositionX, String.valueOf(moveF) + ":" + moveS + "/" + moveT, lastPositionX, String.valueOf(lastF) + ":" + lastS + "/" + lastT);
 											lastF = moveF;
 											lastS = moveS;
 											lastT = moveT;
 											lastPositionX = movePositionX;
 										}
-										for (int k = 0; k < speeds.size(); k++) hold.addSpeedEvent(speeds.get(k)[3] * speed, String.valueOf((k == speeds.size() - 1) ? (speeds.get(k)[1].intValue() + 1) : speeds.get(k + 1)[0].intValue()) + ":" + speeds.get(k + (k == speeds.size() - 1 ? 0 : 1))[1].intValue() + "/" + speeds.get(k + (k == speeds.size() - 1 ? 0 : 1))[2].intValue(), speeds.get(k)[3] * speed, String.valueOf(speeds.get(k)[0].intValue()) + ":" + speeds.get(k)[1].intValue() + "/" + speeds.get(k)[2].intValue());
-										lines.add(hold);
+										if (hold != null) {
+											for (int k = 0; k < speeds.size(); k++) hold.addSpeedEvent(speeds.get(k)[3] * speed, String.valueOf((k == speeds.size() - 1) ? (speeds.get(k)[1].intValue() + 1) : speeds.get(k + 1)[0].intValue()) + ":" + speeds.get(k + (k == speeds.size() - 1 ? 0 : 1))[1].intValue() + "/" + speeds.get(k + (k == speeds.size() - 1 ? 0 : 1))[2].intValue(), speeds.get(k)[3] * speed, String.valueOf(speeds.get(k)[0].intValue()) + ":" + speeds.get(k)[1].intValue() + "/" + speeds.get(k)[2].intValue());
+											lines.add(hold);
+										}
 									} else {
 										JSONArray endTime = seg.getJSONObject(seg.length() - 1).getJSONArray("beat");
 										JSONArray startTime = jo.getJSONArray("beat");
@@ -708,12 +700,7 @@ public class Functions {
 					doZip(path.getAbsolutePath(), dir.getAbsolutePath() + File.separator + name.replaceAll("/", " ") + " osu_" + level.replaceAll("/", " ") + ".pez");
 				}
 			}
-			BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(MainActivity.settings, false), "UTF-8"));
-			JSONStringer js = new JSONStringer();
-			js.object().key("default_path").value(defaultPath).key("last_path").value(lastPath).key("delete_converted").value(deleteConverted).key("speed").value(bpm && scroll ? 3 : (bpm ? 1 : (scroll ? 2 : 0))).key("wide").value(wide).key("slide").value(slide).key("guide").value(guide).key("guide_fake").value(fake).key("interval").value(interval[0] + ":" + interval[1] + "/" + interval[2]).key("random_falling").value(randomFalling).key("luck").value(luck).key("default_speed").value(speed).key("default_position").value(position).endObject();
-			bw.write(js.toString());
-			bw.close();
-			if (setjo.getBoolean("delete_converted")) for (File f : MainActivity.charts) f.delete();
+			if (deleteConverted) for (File f : MainActivity.charts) f.delete();
 			return null;
 		} catch (Exception e){
 			StringWriter sw = new StringWriter();

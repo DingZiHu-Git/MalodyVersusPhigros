@@ -4,10 +4,10 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
-import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.Switch;
@@ -23,22 +23,18 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import org.json.JSONObject;
 import org.json.JSONStringer;
 
 public class SettingsActivity extends AppCompatActivity {
-	public File temp;
+	public JSONObject jo;
 	public File settings;
-	public int speed;
-	public boolean wide;
-	public boolean slide;
-	public int guide;
-	public boolean guideFake;
-	public String guideInterval;
-	public boolean randomFalling;
-	public boolean luck;
-	public double defaultSpeed;
-	public double defaultPosition;
+	public File temp;
+	public EditText defaultPath;
+	public Switch lastPath;
+	public Switch deleteConverted;
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -46,25 +42,15 @@ public class SettingsActivity extends AppCompatActivity {
 		Toolbar toolbar = findViewById(R.id.settings_toolbar);
 		setSupportActionBar(toolbar);
 		try {
-			temp = new File("/data/data/" + getPackageName() + "/cache");
 			settings = new File("/data/data/" + getPackageName() + "/files/settings.json");
+			temp = new File("/data/data/" + getPackageName() + "/cache");
 			BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(settings), "UTF-8"));
-			JSONObject jo = new JSONObject(br.readLine());
-			final EditText defaultPath = findViewById(R.id.default_path);
+			jo = new JSONObject(br.readLine());
+			defaultPath = findViewById(R.id.default_path);
 			final Button checkPath = findViewById(R.id.check_path);
-			final Switch lastPath = findViewById(R.id.last_path);
-			Switch deleteConverted = findViewById(R.id.delete_converted);
+			lastPath = findViewById(R.id.last_path);
+			deleteConverted = findViewById(R.id.delete_converted);
 			Button showFileList = findViewById(R.id.show_file_list);
-			speed = jo.getInt("speed");
-			wide = jo.getBoolean("wide");
-			slide = jo.getBoolean("slide");
-			guide = jo.getInt("guide");
-			guideFake = jo.getBoolean("guide_fake");
-			guideInterval = jo.getString("interval");
-			randomFalling = jo.getBoolean("random_falling");
-			luck = jo.getBoolean("luck");
-			defaultSpeed = jo.getDouble("default_speed");
-			defaultPosition = jo.getDouble("default_position");
 			defaultPath.setText(jo.getString("default_path"));
 			lastPath.setChecked(jo.getBoolean("last_path"));
 			deleteConverted.setChecked(jo.getBoolean("delete_converted"));
@@ -111,14 +97,12 @@ public class SettingsActivity extends AppCompatActivity {
 		}
 	}
 	public void catcher(final Exception e) {
-		for (File f : temp.listFiles()) {
-			if (f.isDirectory()) for (File c : f.listFiles()) c.delete();
-			f.delete();
-		}
+		StringWriter sw = new StringWriter();
+		e.printStackTrace(new PrintWriter(sw, true));
 		AlertDialog.Builder adb = new AlertDialog.Builder(this);
 		adb.setIcon(android.R.drawable.ic_delete);
 		adb.setTitle(R.string.crash_title);
-		adb.setMessage(e.toString());
+		adb.setMessage(sw.toString());
 		adb.setPositiveButton(R.string.crash_ok, new DialogInterface.OnClickListener(){
 				@Override
 				public void onClick(DialogInterface p1, int p2) {
@@ -141,17 +125,10 @@ public class SettingsActivity extends AppCompatActivity {
 	@Override
 	public void onBackPressed() {
 		try {
-			EditText defaultPath = findViewById(R.id.default_path);
-			Switch lastPath = findViewById(R.id.last_path);
-			Switch deleteConverted = findViewById(R.id.delete_converted);
 			String dp = "";
 			if (defaultPath.getText().toString().isEmpty() || !new File(defaultPath.getText().toString()).exists() || !defaultPath.getText().toString().startsWith("/storage/emulated/0")) dp = "/storage/emulated/0";
 			else dp = defaultPath.getText().toString();
-			BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(settings, false), "UTF-8"));
-			JSONStringer js = new JSONStringer();
-			js.object().key("default_path").value(dp).key("last_path").value(lastPath.isChecked()).key("delete_converted").value(deleteConverted.isChecked()).key("speed").value(speed).key("wide").value(wide).key("slide").value(slide).key("guide").value(guide).key("guide_fake").value(guideFake).key("interval").value(guideInterval).key("random_falling").value(randomFalling).key("luck").value(luck).key("default_speed").value(defaultSpeed).key("default_position").value(defaultPosition).endObject();
-			bw.write(js.toString());
-			bw.close();
+			setResult(RESULT_OK, new Intent().putExtra("jo", jo.put("last_path", lastPath.isChecked()).put("default_path", dp).put("delete_converted", deleteConverted.isChecked()).toString()));
 		} catch (Exception e) {
 			catcher(e);
 		}

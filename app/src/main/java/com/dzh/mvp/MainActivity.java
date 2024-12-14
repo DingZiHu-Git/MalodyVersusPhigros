@@ -4,32 +4,26 @@ import android.Manifest;
 import android.app.ProgressDialog;
 import android.content.ClipData;
 import android.content.ClipboardManager;
-import android.content.ContentUris;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
-import android.database.Cursor;
-import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
-import android.provider.DocumentsContract;
-import android.provider.MediaStore;
 import android.text.InputType;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.RadioButton;
+import android.widget.ScrollView;
 import android.widget.SimpleAdapter;
+import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
@@ -71,6 +65,7 @@ public class MainActivity extends AppCompatActivity {
 	public static List<File> charts = new ArrayList<File>();
 	public static List<Map<String, Object>> chartList = new ArrayList<Map<String, Object>>();
 	public Functions functions;
+	public JSONObject jo;
 	public void init() {
 		try {
 			refreshChartList();
@@ -87,11 +82,8 @@ public class MainActivity extends AppCompatActivity {
 			final Switch bpm = findViewById(R.id.bpm);
 			final Switch scroll = findViewById(R.id.scroll);
 			final Switch wide = findViewById(R.id.wide);
-			final Switch slide = findViewById(R.id.slide);
+			final Spinner slide = findViewById(R.id.slide);
 			final Switch guide = findViewById(R.id.guide);
-			final RadioButton guideLegacy = findViewById(R.id.guide_legacy);
-			final RadioButton guideNew = findViewById(R.id.guide_new);
-			final CheckBox guideFake = findViewById(R.id.guide_fake);
 			final EditText guideInterval = findViewById(R.id.guide_interval);
 			final Switch randomFalling = findViewById(R.id.random_falling);
 			final Switch luck = findViewById(R.id.luck);
@@ -103,30 +95,24 @@ public class MainActivity extends AppCompatActivity {
 				settings.getParentFile().mkdirs();
 				settings.createNewFile();
 				BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(settings, false), "UTF-8"));
-				JSONStringer js = new JSONStringer();
-				js.object().key("default_path").value("/storage/emulated/0").key("last_path").value(false).key("delete_converted").value(false).key("speed").value(0).key("wide").value(false).key("slide").value(false).key("guide").value(0).key("guide_fake").value(true).key("interval").value("0:1/12").key("random_falling").value(false).key("luck").value(false).key("default_speed").value(10.0).key("default_position").value(-278.1).endObject();
-				bw.write(js.toString());
+				bw.write(new JSONStringer().object().key("default_path").value("/storage/emulated/0").key("last_path").value(false).key("delete_converted").value(false).key("bpm").value(false).key("scroll").value(false).key("wide").value(false).key("slide").value(0).key("guide").value(false).key("interval").value("0:1/12").key("random_falling").value(false).key("luck").value(false).key("default_speed").value(10.0).key("default_position").value(-278.1).endObject().toString());
 				bw.close();
 			}
 			if (!temp.exists()) temp.mkdirs();
 			if (!dir.exists()) dir.mkdirs();
-			BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(settings), "UTF-8"));
-			final JSONObject jo = new JSONObject(br.readLine());
-			BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(settings, false), "UTF-8"));
-			JSONStringer js = new JSONStringer();
-			js.object().key("default_path").value(jo.has("default_path") ? jo.getString("default_path") : "/storage/emulated/0").key("last_path").value(jo.has("last_path") ? jo.getBoolean("last_path") : false).key("delete_converted").value(jo.has("delete_converted") ? jo.getBoolean("delete_converted") : false).key("speed").value(jo.has("speed") ? jo.getInt("speed") : 0).key("wide").value(jo.has("wide") ? jo.getBoolean("wide") : false).key("slide").value(jo.has("slide") ? jo.getBoolean("slide") : false).key("guide").value(jo.has("guide") ? jo.getInt("guide") : 0).key("guide_fake").value(jo.has("guide_fake") ? jo.getBoolean("guide_fake") : true).key("interval").value(jo.has("interval") ? jo.getString("interval") : "0:1/12").key("random_falling").value(jo.has("random_falling") ? jo.getBoolean("random_falling") : false).key("luck").value(jo.has("luck") ? jo.getBoolean("luck") : false).key("default_speed").value(jo.has("default_speed") ? jo.getDouble("default_speed") : 10d).key("default_position").value(jo.has("default_position") ? jo.getDouble("default_position") : -278.15d).endObject();
-			bw.write(js.toString());
-			bw.close();
+			BufferedReader setbr = new BufferedReader(new InputStreamReader(new FileInputStream(settings), "UTF-8"));
+			jo = new JSONObject(setbr.readLine());
+			setbr.close();
 			loadChart.setOnClickListener(new View.OnClickListener() {
 					@Override
 					public void onClick(View p1) {
-						if (Build.VERSION.SDK_INT > Build.VERSION_CODES.Q) {
-							Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-							i.setType("*/*");
-							i.addCategory(Intent.CATEGORY_OPENABLE);
-							Toast.makeText(MainActivity.this, "请选择一张Malody谱面文件（.mcz或.zip）或Phigros谱面文件（.pez或.zip）！", Toast.LENGTH_LONG).show();
-							startActivityForResult(i, 114);
-						} else startActivityForResult(new Intent(MainActivity.this, FileSelectorActivity.class), 1);
+						try {
+							Intent i = new Intent(MainActivity.this, FileSelectorActivity.class);
+							i.putExtra("path", jo.getString("default_path"));
+							startActivityForResult(i, 1);
+						} catch (Exception e) {
+							catcher(e);
+						}
 					}
 				}
 			);
@@ -145,8 +131,9 @@ public class MainActivity extends AppCompatActivity {
 							map.put("checked", m.get("checked"));
 							newChartList.add(map);
 						}
-						final ListView lv = new ListView(MainActivity.this);
-						final SimpleAdapter sa = new SimpleAdapter(MainActivity.this, newChartList, R.layout.chart_manager_items, new String[]{ "properties", "name", "checked" }, new int[]{ R.id.properties, R.id.name, R.id.checked });
+						ScrollView sv = new ScrollView(MainActivity.this);
+						ListView lv = new ListView(MainActivity.this);
+						SimpleAdapter sa = new SimpleAdapter(MainActivity.this, newChartList, R.layout.chart_manager_items, new String[]{ "properties", "name", "checked" }, new int[]{ R.id.properties, R.id.name, R.id.checked });
 						lv.setAdapter(sa);
 						lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 								@Override
@@ -157,8 +144,9 @@ public class MainActivity extends AppCompatActivity {
 								}
 							}
 						);
+						sv.addView(lv);
 						AlertDialog.Builder adb = new AlertDialog.Builder(MainActivity.this);
-						adb.setIcon(R.drawable.ic_format_list_text).setTitle("管理已加载谱面").setMessage("选中一些文件参与转换或将其删除：").setView(lv).setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+						adb.setIcon(R.drawable.ic_format_list_text).setTitle("管理已加载谱面").setMessage("选中一些文件参与转换或将其删除：").setView(sv).setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
 								@Override
 								public void onClick(DialogInterface dialogInterface, int p) {
 									chartList = newChartList;
@@ -186,11 +174,9 @@ public class MainActivity extends AppCompatActivity {
 						final boolean isBPM = bpm.isChecked();
 						final boolean isScroll = scroll.isChecked();
 						final boolean isWide = wide.isChecked();
-						final boolean isSlide = slide.isChecked();
-						final boolean isGuideLegacy = guideLegacy.isEnabled() && guideLegacy.isChecked();
-						final boolean isGuideNew = guideNew.isEnabled() && guideNew.isChecked();
-						final boolean isGuideFake = guideFake.isEnabled() && guideFake.isChecked();
-						final Integer[] interval = new Integer[]{ Integer.valueOf(guideInterval.getText().toString().substring(0, guideInterval.getText().toString().indexOf(":"))), Integer.valueOf(guideInterval.getText().toString().substring(guideInterval.getText().toString().indexOf(":") + 1, guideInterval.getText().toString().indexOf("/"))), Integer.valueOf(guideInterval.getText().toString().substring(guideInterval.getText().toString().indexOf("/") + 1)) };
+						final int slideValue = slide.getSelectedItemPosition();
+						final boolean isGuide = guide.isChecked();
+						final String interval = guideInterval.getText().toString();
 						final boolean randomFallingValue = randomFalling.isChecked();
 						final boolean luckValue = luck.isChecked();
 						final double speedValue = Double.valueOf(speed.getText().toString());
@@ -201,10 +187,7 @@ public class MainActivity extends AppCompatActivity {
 							new Thread(new Runnable(){
 									@Override
 									public void run() {
-										int object = 0;
-										if (isGuideLegacy) object = 1;
-										else if (isGuideNew) object = 2;
-										crash = functions.convert(false, isBPM, isScroll, isWide, isSlide, object, isGuideFake, interval, randomFallingValue, luckValue, speedValue, positionValue, illustratorValue);
+										crash = functions.convert(false, isBPM, isScroll, isWide, slideValue, isGuide, interval, randomFallingValue, luckValue, speedValue, positionValue, illustratorValue);
 										loading.cancel();
 										runOnUiThread(new Runnable(){
 												@Override
@@ -235,11 +218,9 @@ public class MainActivity extends AppCompatActivity {
 						final boolean isBPM = bpm.isChecked();
 						final boolean isScroll = scroll.isChecked();
 						final boolean isWide = wide.isChecked();
-						final boolean isSlide = slide.isChecked();
-						final boolean isGuideLegacy = guideLegacy.isEnabled() && guideLegacy.isChecked();
-						final boolean isGuideNew = guideNew.isEnabled() && guideNew.isChecked();
-						final boolean isGuideFake = guideFake.isEnabled() && guideFake.isChecked();
-						final Integer[] interval = new Integer[]{ Integer.valueOf(guideInterval.getText().toString().substring(0, guideInterval.getText().toString().indexOf(":"))), Integer.valueOf(guideInterval.getText().toString().substring(guideInterval.getText().toString().indexOf(":") + 1, guideInterval.getText().toString().indexOf("/"))), Integer.valueOf(guideInterval.getText().toString().substring(guideInterval.getText().toString().indexOf("/") + 1)) };
+						final int slideValue = slide.getSelectedItemPosition();
+						final boolean isGuide = guide.isChecked();
+						final String interval = guideInterval.getText().toString();
 						final boolean randomFallingValue = randomFalling.isChecked();
 						final boolean luckValue = luck.isChecked();
 						final double speedValue = Double.valueOf(speed.getText().toString());
@@ -250,10 +231,7 @@ public class MainActivity extends AppCompatActivity {
 							new Thread(new Runnable(){
 									@Override
 									public void run() {
-										int object = 0;
-										if (isGuideLegacy) object = 1;
-										else if (isGuideNew) object = 2;
-										crash = functions.convert(true, isBPM, isScroll, isWide, isSlide, object, isGuideFake, interval, randomFallingValue, luckValue, speedValue, positionValue, illustratorValue);
+										crash = functions.convert(true, isBPM, isScroll, isWide, slideValue, isGuide, interval, randomFallingValue, luckValue, speedValue, positionValue, illustratorValue);
 										loading.cancel();
 										runOnUiThread(new Runnable(){
 												@Override
@@ -262,7 +240,7 @@ public class MainActivity extends AppCompatActivity {
 													else if (crash.isEmpty()) Toast.makeText(MainActivity.this, "?🤔🤔!", Toast.LENGTH_SHORT).show();
 													else {
 														try {
-															throw new Exception("Failed to Key to Slide:\n" + crash);
+															throw new Exception("Failed to convert chart:\n" + crash);
 														} catch (Exception e) {
 															catcher(e);
 														}
@@ -278,82 +256,54 @@ public class MainActivity extends AppCompatActivity {
 					}
 				}
 			);
-			if (jo.getInt("speed") == 1) bpm.setChecked(true);
-			if (jo.getInt("speed") == 2) scroll.setChecked(true);
-			if (jo.getInt("speed") == 3) {
-				bpm.setChecked(true);
-				scroll.setChecked(true);
-			}
+			if (jo.getBoolean("bpm")) bpm.setChecked(true);
+			if (jo.getBoolean("scroll")) scroll.setChecked(true);
 			if (jo.getBoolean("wide")) wide.setChecked(true);
-			if (jo.getBoolean("slide")) {
-				slide.setChecked(true);
-				guide.setEnabled(true);
-				if (guide.isChecked()) {
-					guideLegacy.setEnabled(true);
-					guideNew.setEnabled(true);
-					guideFake.setEnabled(true);
-					guideInterval.setEnabled(true);
-					if (!guideLegacy.isChecked() && !guideNew.isChecked()) guideLegacy.setChecked(true);
-				} else {
-					guideLegacy.setEnabled(false);
-					guideNew.setEnabled(false);
-					guideFake.setEnabled(false);
+			slide.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, new String[]{ "直长条", "Tap+Drag", "移动长条" }));
+			slide.setSelection(jo.getInt("slide"));
+			switch (jo.getInt("slide")) {
+				case 0:
+					guide.setEnabled(false);
 					guideInterval.setEnabled(false);
-				}
+					break;
+				case 1:
+					guide.setEnabled(false);
+					guideInterval.setEnabled(true);
+					break;
+				case 2:
+					guide.setEnabled(true);
+					guideInterval.setEnabled(true);
 			}
-			slide.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener(){
+			guide.setChecked(jo.getBoolean("guide"));
+			slide.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 					@Override
-					public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-						if (slide.isChecked()) {
-							guide.setEnabled(true);
-							if (guide.isChecked()) {
-								guideLegacy.setEnabled(true);
-								guideNew.setEnabled(true);
-								guideFake.setEnabled(true);
-								guideInterval.setEnabled(true);
-								if (!guideLegacy.isChecked() && !guideNew.isChecked()) guideLegacy.setChecked(true);
-							} else {
-								guideLegacy.setEnabled(false);
-								guideNew.setEnabled(false);
-								guideFake.setEnabled(false);
+					public void onItemSelected(AdapterView<?> adapterView, View view, int p, long p1) {
+						switch (p) {
+							case 0:
+								guide.setEnabled(false);
 								guideInterval.setEnabled(false);
-							}
-						} else {
-							guide.setEnabled(false);
-							guideLegacy.setEnabled(false);
-							guideNew.setEnabled(false);
-							guideFake.setEnabled(false);
-							guideInterval.setEnabled(false);
+								break;
+							case 1:
+								guide.setEnabled(false);
+								guideInterval.setEnabled(true);
+								break;
+							case 2:
+								guide.setEnabled(true);
+								try {
+									guideInterval.setEnabled(guide.isChecked());
+								} catch (Exception e) {
+									catcher(e);
+								}
 						}
 					}
+					@Override
+					public void onNothingSelected(AdapterView<?> adapterView) {}
 				}
 			);
-			if (jo.getInt("guide") != 0) {
-				guide.setEnabled(true);
-				guide.setChecked(true);
-				guideLegacy.setEnabled(true);
-				guideNew.setEnabled(true);
-				guideFake.setEnabled(true);
-				guideInterval.setEnabled(true);
-				if (jo.getInt("guide") == 1) guideLegacy.setChecked(true);
-				if (jo.getInt("guide") == 2) guideNew.setChecked(true);
-				if (!jo.getBoolean("guide_fake")) guideFake.setChecked(false);
-			}
-			guide.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener(){
+			guide.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
 					@Override
 					public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-						if (guide.isChecked()) {
-							guideLegacy.setEnabled(true);
-							guideNew.setEnabled(true);
-							guideFake.setEnabled(true);
-							guideInterval.setEnabled(true);
-							if (!guideLegacy.isChecked() && !guideNew.isChecked()) guideLegacy.setChecked(true);
-						} else {
-							guideLegacy.setEnabled(false);
-							guideNew.setEnabled(false);
-							guideFake.setEnabled(false);
-							guideInterval.setEnabled(false);
-						}
+						guideInterval.setEnabled(isChecked);
 					}
 				}
 			);
@@ -536,27 +486,42 @@ public class MainActivity extends AppCompatActivity {
 	}
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		switch (item.getItemId()) {
-			case R.id.clear_tmp:
-				for (File f : temp.listFiles()) {
-					if (f.isDirectory()) for (File c : f.listFiles()) c.delete();
-					f.delete();
-				}
-				charts.clear();
-				chartList.clear();
-				Toast.makeText(this, "已清空已加载谱面！", Toast.LENGTH_SHORT).show();
-				return true;
-			case R.id.settings:
-				Intent i = new Intent(this, SettingsActivity.class);
-				startActivity(i);
-				return true;
-			case R.id.about:
-				AlertDialog.Builder adb = new AlertDialog.Builder(this);
-				adb.setIcon(R.drawable.ic_launcher).setTitle(R.string.app_name).setMessage("MalodyVersusPhigros v1.5.5 by 起名钉子户\n想催更？给我的视频投114514颗币就可以啦！（被打）\n如果你想向我报告一些bug的话，请立即联系我！！！\n（因为晚一点可能就被其他人抢走了😂）");
-				adb.setPositiveButton(R.string.about_ok, null).show();
-				return true;
-			case R.id.update_log:
-				try {
+		try {
+			switch (item.getItemId()) {
+				case R.id.save_prop:
+					Switch bpm = findViewById(R.id.bpm);
+					Switch scroll = findViewById(R.id.scroll);
+					Switch wide = findViewById(R.id.wide);
+					Spinner slide = findViewById(R.id.slide);
+					Switch guide = findViewById(R.id.guide);
+					EditText guideInterval = findViewById(R.id.guide_interval);
+					Switch randomFalling = findViewById(R.id.random_falling);
+					Switch luck = findViewById(R.id.luck);
+					EditText speed = findViewById(R.id.speed);
+					EditText position = findViewById(R.id.position);
+					BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(settings, false), "UTF-8"));
+					bw.write(new JSONStringer().object().key("default_path").value(jo.getString("default_path")).key("last_path").value(jo.getBoolean("last_path")).key("delete_converted").value(jo.getBoolean("delete_converted")).key("bpm").value(bpm.isChecked()).key("scroll").value(scroll.isChecked()).key("wide").value(wide.isChecked()).key("slide").value(slide.getSelectedItemPosition()).key("guide").value(guide.isChecked()).key("interval").value(guideInterval.getText().toString()).key("random_falling").value(randomFalling.isChecked()).key("luck").value(luck.isChecked()).key("default_speed").value(speed.getText().toString()).key("default_position").value(position.getText().toString()).endObject().toString());
+					bw.close();
+					Toast.makeText(this, "配置已保存！", Toast.LENGTH_SHORT).show();
+					break;
+				case R.id.clear_tmp:
+					for (File f : temp.listFiles()) {
+						if (f.isDirectory()) for (File c : f.listFiles()) c.delete();
+						f.delete();
+					}
+					charts.clear();
+					chartList.clear();
+					Toast.makeText(this, "已清空已加载谱面！", Toast.LENGTH_SHORT).show();
+					return true;
+				case R.id.settings:
+					startActivityForResult(new Intent(this, SettingsActivity.class), 2);
+					return true;
+				case R.id.about:
+					AlertDialog.Builder adb = new AlertDialog.Builder(this);
+					adb.setIcon(R.drawable.ic_launcher).setTitle(R.string.app_name).setMessage("MalodyVersusPhigros v1.5.5 by 起名钉子户\n想催更？给我的视频投114514颗币就可以啦！（被打）\n如果你想向我报告一些bug的话，请立即联系我！！！\n（因为晚一点可能就被其他人抢走了😂）");
+					adb.setPositiveButton(R.string.about_ok, null).show();
+					return true;
+				case R.id.update_log:
 					InputStream is = getResources().openRawResource(R.raw.update);
 					BufferedReader reader = new BufferedReader(new InputStreamReader(is));
 					String line = null;
@@ -564,10 +529,10 @@ public class MainActivity extends AppCompatActivity {
 					while ((line = reader.readLine()) != null) log += (line + "\n");
 					adb = new AlertDialog.Builder(this);
 					adb.setIcon(android.R.drawable.ic_dialog_info).setTitle("更新日志").setMessage(log.substring(0, log.length() - 1)).setPositiveButton(R.string.about_ok, null).show();
-				} catch (Exception e) {
-					catcher(e);
-				}
-				return true;
+					return true;
+			}
+		} catch (Exception e) {
+			catcher(e);
 		}
 		return super.onOptionsItemSelected(item);
 	}
@@ -576,33 +541,48 @@ public class MainActivity extends AppCompatActivity {
 		super.onActivityResult(requestCode, resultCode, data);
 		if (resultCode == RESULT_OK) {
 			try {
-				final String path = (requestCode == 1 ? data.getStringExtra("path") : getPath(this, data.getData()));
-				new Thread(new Runnable(){
-						@Override
-						public void run() {
-							crash = load(path);
-							charts.add(new File(path));
-							refreshChartList();
-							loading.cancel();
-							runOnUiThread(new Runnable(){
-									@Override
-									public void run() {
-										if (crash == null) Toast.makeText(MainActivity.this, "谱面加载完成！", Toast.LENGTH_SHORT).show();
-										else if (crash.isEmpty()) Toast.makeText(MainActivity.this, "?🤔🤔!", Toast.LENGTH_SHORT).show();
-										else {
-											try {
-												throw new Exception("Failed to load chart:\n" + crash);
-											} catch (Exception e) {
-												catcher(e);
+				switch (requestCode) {
+					case 1:
+						final String path = data.getStringExtra("path");
+						if (jo.getBoolean("last_path")) jo.put("default_path", new File(path).getParent());
+						if (!(path.toLowerCase().endsWith(".mcz") || path.toLowerCase().endsWith(".zip") || path.toLowerCase().endsWith(".pez"))) {
+							Toast.makeText(MainActivity.this, "文件格式不正确！", Toast.LENGTH_SHORT).show();
+							return;
+						}
+						new Thread(new Runnable(){
+								@Override
+								public void run() {
+									crash = load(path);
+									charts.add(new File(path));
+									refreshChartList();
+									loading.cancel();
+									runOnUiThread(new Runnable(){
+											@Override
+											public void run() {
+												if (crash == null) Toast.makeText(MainActivity.this, "谱面加载完成！", Toast.LENGTH_SHORT).show();
+												else if (crash.isEmpty()) Toast.makeText(MainActivity.this, "?🤔🤔!", Toast.LENGTH_SHORT).show();
+												else {
+													try {
+														throw new Exception("Failed to load chart:\n" + crash);
+													} catch (Exception e) {
+														catcher(e);
+													}
+												}
 											}
 										}
-									}
+									);
 								}
-							);
-						}
-					}
-				, "load").start();
-				loading.show();
+							}
+							, "load").start();
+						loading.show();
+						break;
+					case 2:
+						jo = new JSONObject(data.getStringExtra("jo"));
+						break;
+				}
+				BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(settings, false), "UTF-8"));
+				bw.write(jo.toString());
+				bw.close();
 			} catch (Exception e) {
 				catcher(e);
 			}
@@ -693,56 +673,5 @@ public class MainActivity extends AppCompatActivity {
 			while ((length = fis.read(bs)) >= 0) zos.write(bs, 0, length);
 			fis.close();
 		}
-	}
-	public String getPath(final Context context, final Uri uri) {
-		final boolean isKitKat = Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT;
-		if (isKitKat && DocumentsContract.isDocumentUri(context, uri)) {
-			if (isExternalStorageDocument(uri)) {
-				final String docId = DocumentsContract.getDocumentId(uri);
-				final String[] split = docId.split(":");
-				final String type = split[0];
-				if ("primary".equalsIgnoreCase(type)) return Environment.getExternalStorageDirectory() + "/" + split[1];
-			} else if (isDownloadsDocument(uri)) {
-				final Uri contentUri = ContentUris.withAppendedId(Uri.parse("content://downloads/public_downloads"), ContentUris.parseId(uri));
-				return getDataColumn(context, contentUri, null, null);
-			} else if (isMediaDocument(uri)) {
-				final String docId = DocumentsContract.getDocumentId(uri);
-				final String[] split = docId.split(":");
-				final String type = split[0];
-				Uri contentUri = null;
-				if ("image".equals(type)) contentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-				else if ("video".equals(type)) contentUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
-				else if ("audio".equals(type)) contentUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
-				final String selection = "_id=?";
-				final String[] selectionArgs = new String[]{ split[1] };
-				return getDataColumn(context, contentUri, selection, selectionArgs);
-			}
-		} else if ("content".equalsIgnoreCase(uri.getScheme())) return getDataColumn(context, uri, null, null);
-        else if ("file".equalsIgnoreCase(uri.getScheme())) return uri.getPath();
-		return null;
-	}
-	public String getDataColumn(Context context, Uri uri, String selection, String[] selectionArgs) {
-		Cursor cursor = null;
-		final String column = "_data";
-		final String[] projection = { column };
-		try {
-			cursor = context.getContentResolver().query(uri, projection, selection, selectionArgs, null);
-			if (cursor != null && cursor.moveToFirst()) {
-				final int column_index = cursor.getColumnIndexOrThrow(column);
-				return cursor.getString(column_index);
-			}
-		} finally {
-			if (cursor != null) cursor.close();
-		}
-		return null;
-	}
-	public boolean isExternalStorageDocument(Uri uri) {
-		return "com.android.externalstorage.documents".equals(uri.getAuthority());
-	}
-	public boolean isDownloadsDocument(Uri uri) {
-		return "com.android.providers.downloads.documents".equals(uri.getAuthority());
-	}
-	public boolean isMediaDocument(Uri uri) {
-		return "com.android.providers.media.documents".equals(uri.getAuthority());
 	}
 }
