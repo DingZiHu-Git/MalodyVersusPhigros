@@ -15,6 +15,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -131,7 +132,7 @@ public class MainActivity extends AppCompatActivity {
 							map.put("checked", m.get("checked"));
 							newChartList.add(map);
 						}
-						ScrollView sv = new ScrollView(MainActivity.this);
+						final ScrollView sv = new ScrollView(MainActivity.this);
 						ListView lv = new ListView(MainActivity.this);
 						SimpleAdapter sa = new SimpleAdapter(MainActivity.this, newChartList, R.layout.chart_manager_items, new String[]{ "properties", "name", "checked" }, new int[]{ R.id.properties, R.id.name, R.id.checked });
 						lv.setAdapter(sa);
@@ -150,9 +151,16 @@ public class MainActivity extends AppCompatActivity {
 								@Override
 								public void onClick(DialogInterface dialogInterface, int p) {
 									chartList = newChartList;
+									sv.removeAllViews();
 								}
 							}
-						).setNegativeButton(R.string.cancel, null).setNeutralButton("删除已选文件", new DialogInterface.OnClickListener() {
+						).setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+								@Override
+								public void onClick(DialogInterface dialogInterface, int p) {
+									sv.removeAllViews();
+								}
+							}
+						).setNeutralButton("删除已选文件", new DialogInterface.OnClickListener() {
 								@Override
 								public void onClick(DialogInterface dialogInterface, int p) {
 									for (int i = newChartList.size() - 1; i >= 0; i--) {
@@ -162,6 +170,7 @@ public class MainActivity extends AppCompatActivity {
 											chartList.remove(i);
 										}
 									}
+									sv.removeAllViews();
 								}
 							}
 						).show();
