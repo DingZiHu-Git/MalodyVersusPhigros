@@ -12,7 +12,7 @@
 		android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
 
 		<androidx.appcompat.widget.Toolbar
-			android:id="@+id/toolbar_file_selector"
+			android:id="@+id/file_selector_toolbar"
 			android:layout_width="match_parent"
 			android:layout_height="?attr/actionBarSize"
 			app:popupTheme="@style/ThemeOverlay.AppCompat.Light"/>

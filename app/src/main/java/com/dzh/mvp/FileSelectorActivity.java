@@ -35,7 +35,7 @@ public class FileSelectorActivity extends AppCompatActivity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_file_selector);
-		Toolbar toolbar = findViewById(R.id.toolbar_file_selector);
+		Toolbar toolbar = findViewById(R.id.file_selector_toolbar);
 		setSupportActionBar(toolbar);
 		try {
 			dir = new File(getIntent().getStringExtra("path"));

@@ -15,7 +15,6 @@ import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import com.dzh.mvp.R;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;

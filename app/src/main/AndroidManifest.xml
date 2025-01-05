@@ -3,14 +3,9 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.dzh.mvp">
 
-    <!-- 读取存储卡中的内容 -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
 
-    <!-- 修改或删除 SD 卡中的内容 -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-
-    <!-- MOUNT_UNMOUNT_FILESYSTEMS -->
-    <uses-permission android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS"/>
 
     <application
         android:allowBackup="true"
@@ -43,11 +38,15 @@
 
         <activity
             android:name=".FileSelectorActivity"
-            android:label="选择一张Malody谱面（.mcz或.zip）……"/>
+            android:label="选择一张谱面文件……"/>
 
         <activity
             android:name=".SettingsActivity"
             android:label="设置"/>
+
+        <activity
+			android:name=".LoadFromMalodyActivity"
+			android:label="从Malody本地谱面加载"/>
 
     </application>
 

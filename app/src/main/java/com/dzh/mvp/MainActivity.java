@@ -15,7 +15,6 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -54,6 +53,7 @@ import java.util.zip.ZipOutputStream;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONStringer;
+import android.widget.Adapter;
 
 public class MainActivity extends AppCompatActivity {
 	public static String packageName;
@@ -69,7 +69,6 @@ public class MainActivity extends AppCompatActivity {
 	public JSONObject jo;
 	public void init() {
 		try {
-			refreshChartList();
 			functions = new Functions();
 			loading = new ProgressDialog(this);
 			loading.setCancelable(false);
@@ -107,13 +106,27 @@ public class MainActivity extends AppCompatActivity {
 			loadChart.setOnClickListener(new View.OnClickListener() {
 					@Override
 					public void onClick(View p1) {
-						try {
-							Intent i = new Intent(MainActivity.this, FileSelectorActivity.class);
-							i.putExtra("path", jo.getString("default_path"));
-							startActivityForResult(i, 1);
-						} catch (Exception e) {
-							catcher(e);
-						}
+						final AlertDialog.Builder adb = new AlertDialog.Builder(MainActivity.this);
+						adb.setAdapter(new ArrayAdapter<String>(MainActivity.this, android.R.layout.simple_list_item_1, new String[]{ "从Malody本地谱面加载", "加载其他谱面" }), new DialogInterface.OnClickListener() {
+								@Override
+								public void onClick(DialogInterface dialog, int which) {
+									try {
+										switch (which) {
+											case 0:
+												startActivityForResult(new Intent(MainActivity.this, LoadFromMalodyActivity.class), 1);
+												break;
+											case 1:
+												Intent i = new Intent(MainActivity.this, FileSelectorActivity.class);
+												i.putExtra("path", jo.getString("default_path"));
+												startActivityForResult(i, 2);
+												break;
+										}
+									} catch (Exception e) {
+										catcher(e);
+									}
+								}
+							}
+						).show();
 					}
 				}
 			);
@@ -396,6 +409,15 @@ public class MainActivity extends AppCompatActivity {
 					}
 				}
 			);
+			new Thread(new Runnable() {
+					@Override
+					public void run() {
+						refreshChartList();
+						loading.cancel();
+					}
+				}
+				, "refreshChartList").start();
+			loading.show();
 		} catch (Exception e) {
 			catcher(e);
 		}
@@ -429,13 +451,26 @@ public class MainActivity extends AppCompatActivity {
 							break;
 					}
 					properties = "Malody谱面\n曲名：" + meta.getJSONObject("song").getString("title") + "\n曲师：" + meta.getJSONObject("song").getString("artist") + "\n模式：" + mode + "(" + meta.getInt("mode") + ")\n难度：" + meta.getString("version") + "\n谱师：" + meta.getString("creator");
-				} else if (file.getName().toLowerCase().endsWith(".osu")) properties = "osu!谱面\n暂不支持谱面信息预览";
-				else if (file.getName().toLowerCase().endsWith(".json") || file.getName().endsWith(".pec")) properties = "Phigros谱面";
+					br.close();
+				} else if (file.getName().toLowerCase().endsWith(".osu")) {
+					String[] prop = new String[5];
+					BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
+						String line = null;
+						while ((line = br.readLine()) != null) {
+							if (line.startsWith("Title:")) prop[0] = line.substring(line.indexOf(":") + 1).trim() + "\n";
+							else if (line.startsWith("Artist:")) prop[1] = "曲师：" + line.substring(line.indexOf(":") + 1).trim() + "\n";
+							else if (line.startsWith("Mode:")) prop[2] = "模式：" + (Integer.parseInt(line.split(":")[1]) == 3 ? "osu!mania(3)" : "未知(" + line.split(":")[1] + ")\n");
+							else if (line.startsWith("Version:")) prop[3] = "难度：" + line.substring(line.indexOf(":") + 1).trim() + "\n";
+							else if (line.startsWith("Creator:")) prop[4] = "谱师：" + line.substring(line.indexOf(":") + 1).trim();
+						}
+					properties = "osu!谱面\n" + prop[0] + prop[1] + prop[2] + prop[3] + prop[4];
+					br.close();
+				} else if (file.getName().toLowerCase().endsWith(".json") || file.getName().endsWith(".pec")) properties = "Phigros谱面";
 				else if (file.getName().toLowerCase().endsWith(".mvp")) properties = "MalodyVersusPhigros脚本文件";
 				else if (file.getName().toLowerCase().endsWith(".extra")) properties = "无需额外处理的文件集";
 				if (!properties.isEmpty()) {
-					chart.put("properties", properties);
 					chart.put("name", name);
+					chart.put("properties", properties);
 					chart.put("checked", true);
 				}
 				if (!chart.isEmpty()) chartList.add(chart);
@@ -454,8 +489,8 @@ public class MainActivity extends AppCompatActivity {
 		resources = getResources();
 		settings = new File("/data/data/" + getPackageName() + "/files/settings.json");
 		temp = new File("/data/data/" + getPackageName() + "/cache");
-		if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) ActivityCompat.requestPermissions(this, new String[]{ Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.MOUNT_UNMOUNT_FILESYSTEMS }, 114);
-		if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) init();
+		if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) ActivityCompat.requestPermissions(this, new String[]{ Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE }, 114);
+		if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) init();
 	}
 	public void catcher(final Exception e) {
 		for (File f : temp.listFiles()) {
@@ -523,11 +558,11 @@ public class MainActivity extends AppCompatActivity {
 					Toast.makeText(this, "已清空已加载谱面！", Toast.LENGTH_SHORT).show();
 					return true;
 				case R.id.settings:
-					startActivityForResult(new Intent(this, SettingsActivity.class), 2);
+					startActivityForResult(new Intent(this, SettingsActivity.class), 3);
 					return true;
 				case R.id.about:
 					AlertDialog.Builder adb = new AlertDialog.Builder(this);
-					adb.setIcon(R.drawable.ic_launcher).setTitle(R.string.app_name).setMessage("MalodyVersusPhigros v1.5.5 by 起名钉子户\n想催更？给我的视频投114514颗币就可以啦！（被打）\n如果你想向我报告一些bug的话，请立即联系我！！！\n（因为晚一点可能就被其他人抢走了😂）");
+					adb.setIcon(R.drawable.ic_launcher).setTitle(R.string.app_name).setMessage("MalodyVersusPhigros v1.5.6 by 起名钉子户\n想催更？给我的视频投114514颗币就可以啦！（被打）\n如果你想向我报告一些bug的话，请立即联系我！！！\n（因为晚一点可能就被其他人抢走了😂）");
 					adb.setPositiveButton(R.string.about_ok, null).show();
 					return true;
 				case R.id.update_log:
@@ -552,13 +587,33 @@ public class MainActivity extends AppCompatActivity {
 			try {
 				switch (requestCode) {
 					case 1:
+						final String[] files = data.getStringArrayExtra("files");
+						new Thread(new Runnable() {
+								@Override
+								public void run() {
+									for (String file : files) copy(new File(file), temp.getAbsolutePath() + File.separator + file.substring(file.lastIndexOf("/") + 1));
+									refreshChartList();
+									loading.cancel();
+									runOnUiThread(new Runnable() {
+											@Override
+											public void run() {
+												Toast.makeText(MainActivity.this, "谱面加载完成！", Toast.LENGTH_SHORT).show();
+											}
+										}
+									);
+								}
+							}
+						, "load_from_malody").start();
+						loading.show();
+						break;
+					case 2:
 						final String path = data.getStringExtra("path");
 						if (jo.getBoolean("last_path")) jo.put("default_path", new File(path).getParent());
 						if (!(path.toLowerCase().endsWith(".mcz") || path.toLowerCase().endsWith(".zip") || path.toLowerCase().endsWith(".pez"))) {
 							Toast.makeText(MainActivity.this, "文件格式不正确！", Toast.LENGTH_SHORT).show();
 							return;
 						}
-						new Thread(new Runnable(){
+						new Thread(new Runnable() {
 								@Override
 								public void run() {
 									crash = load(path);
@@ -585,7 +640,7 @@ public class MainActivity extends AppCompatActivity {
 							, "load").start();
 						loading.show();
 						break;
-					case 2:
+					case 3:
 						jo = new JSONObject(data.getStringExtra("jo"));
 						break;
 				}
@@ -628,14 +683,11 @@ public class MainActivity extends AppCompatActivity {
 	}
 	@Override
 	public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-		switch (requestCode) {
-			case 114:
-				if (grantResults.length > 0 && grantResults[0] != PackageManager.PERMISSION_GRANTED) {
-					Toast.makeText(this, "权限申请失败。请在您手机的设置中授予。", Toast.LENGTH_LONG).show();
-					finish();
-				} else init();
-				break;
-			default:
+		int result = 0;
+		for (int i : grantResults) if (i == PackageManager.PERMISSION_GRANTED) result++;
+		if (result != permissions.length) {
+			Toast.makeText(this, "获取权限失败。请前往手机设置授予。", Toast.LENGTH_LONG).show();
+			finishAndRemoveTask();
 		}
 	}
 	public void copy(File source, String dest) {
@@ -650,8 +702,14 @@ public class MainActivity extends AppCompatActivity {
 			is.close();
 			os.flush();
 			os.close();
-		} catch (Exception e) {
-			catcher(e);
+		} catch (final Exception e) {
+			runOnUiThread(new Runnable() {
+					@Override
+					public void run() {
+						catcher(e);
+					}
+				}
+			);
 		}
 	}
 	public void doZip(String srcPath, String targetPath) {
