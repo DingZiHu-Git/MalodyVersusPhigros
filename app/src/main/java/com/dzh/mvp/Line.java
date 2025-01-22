@@ -128,15 +128,9 @@ public class Line extends Object {
 	}
 	public Line addAlphaEvent(int easingType, int end, String endTime, int start, String startTime) {
 		try {
-			String[] et = endTime.split(":");
-			int endNum = Integer.valueOf(et[0]);
-			int endUp = Integer.valueOf(et[1].split("/")[0]);
-			int endDown = Integer.valueOf(et[1].split("/")[1]);
-			String[] st = startTime.split(":");
-			int startNum = Integer.valueOf(st[0]);
-			int startUp = Integer.valueOf(st[1].split("/")[0]);
-			int startDown = Integer.valueOf(st[1].split("/")[1]);
-			alphaEvents.put(new JSONObject().put("bezier", 0).put("bezierPoints", new JSONArray().put(0d).put(0d).put(0d).put(0d)).put("easingLeft", 0d).put("easingRight", 1d).put("easingType", easingType).put("end", end).put("endTime", new JSONArray().put(endNum).put(endUp).put(endDown)).put("linkgroup", 0).put("start", start).put("startTime", new JSONArray().put(startNum).put(startUp).put(startDown)));
+			Fraction et = new Fraction(endTime);
+			Fraction st = new Fraction(startTime);
+			alphaEvents.put(new JSONObject().put("bezier", 0).put("bezierPoints", new JSONArray().put(0d).put(0d).put(0d).put(0d)).put("easingLeft", 0d).put("easingRight", 1d).put("easingType", easingType).put("end", end).put("endTime", et.toJSONArray()).put("linkgroup", 0).put("start", start).put("startTime", st.toJSONArray()));
 			sortAll();
 			return this;
 		} catch (Exception e) {
@@ -146,15 +140,9 @@ public class Line extends Object {
 	}
 	public Line addMoveXEvent(int eventLayer, int easingType, double end, String endTime, double start, String startTime) {
 		try {
-			String[] et = endTime.split(":");
-			int endNum = Integer.valueOf(et[0]);
-			int endUp = Integer.valueOf(et[1].split("/")[0]);
-			int endDown = Integer.valueOf(et[1].split("/")[1]);
-			String[] st = startTime.split(":");
-			int startNum = Integer.valueOf(st[0]);
-			int startUp = Integer.valueOf(st[1].split("/")[0]);
-			int startDown = Integer.valueOf(st[1].split("/")[1]);
-			moveXEvents[eventLayer].put(new JSONObject().put("bezier", 0).put("bezierPoints", new JSONArray().put(0d).put(0d).put(0d).put(0d)).put("easingLeft", 0d).put("easingRight", 1d).put("easingType", easingType).put("end", end).put("endTime", new JSONArray().put(endNum).put(endUp).put(endDown)).put("linkgroup", 0).put("start", start).put("startTime", new JSONArray().put(startNum).put(startUp).put(startDown)));
+			Fraction et = new Fraction(endTime);
+			Fraction st = new Fraction(startTime);
+			moveXEvents[eventLayer].put(new JSONObject().put("bezier", 0).put("bezierPoints", new JSONArray().put(0d).put(0d).put(0d).put(0d)).put("easingLeft", 0d).put("easingRight", 1d).put("easingType", easingType).put("end", end).put("endTime", et.toJSONArray()).put("linkgroup", 0).put("start", start).put("startTime", st.toJSONArray()));
 			sortAll();
 			return this;
 		} catch (Exception e) {
@@ -164,15 +152,9 @@ public class Line extends Object {
 	}
 	public Line addMoveYEvent(int easingType, double end, String endTime, double start, String startTime) {
 		try {
-			String[] et = endTime.split(":");
-			int endNum = Integer.valueOf(et[0]);
-			int endUp = Integer.valueOf(et[1].split("/")[0]);
-			int endDown = Integer.valueOf(et[1].split("/")[1]);
-			String[] st = startTime.split(":");
-			int startNum = Integer.valueOf(st[0]);
-			int startUp = Integer.valueOf(st[1].split("/")[0]);
-			int startDown = Integer.valueOf(st[1].split("/")[1]);
-			moveYEvents.put(new JSONObject().put("bezier", 0).put("bezierPoints", new JSONArray().put(0d).put(0d).put(0d).put(0d)).put("easingLeft", 0d).put("easingRight", 1d).put("easingType", easingType).put("end", end).put("endTime", new JSONArray().put(endNum).put(endUp).put(endDown)).put("linkgroup", 0).put("start", start).put("startTime", new JSONArray().put(startNum).put(startUp).put(startDown)));
+			Fraction et = new Fraction(endTime);
+			Fraction st = new Fraction(startTime);
+			moveYEvents.put(new JSONObject().put("bezier", 0).put("bezierPoints", new JSONArray().put(0d).put(0d).put(0d).put(0d)).put("easingLeft", 0d).put("easingRight", 1d).put("easingType", easingType).put("end", end).put("endTime", et.toJSONArray()).put("linkgroup", 0).put("start", start).put("startTime", st.toJSONArray()));
 			sortAll();
 			return this;
 		} catch (Exception e) {
@@ -182,15 +164,9 @@ public class Line extends Object {
 	}
 	public Line addRotateEvent(int easingType, double end, String endTime, double start, String startTime) {
 		try {
-			String[] et = endTime.split(":");
-			int endNum = Integer.valueOf(et[0]);
-			int endUp = Integer.valueOf(et[1].split("/")[0]);
-			int endDown = Integer.valueOf(et[1].split("/")[1]);
-			String[] st = startTime.split(":");
-			int startNum = Integer.valueOf(st[0]);
-			int startUp = Integer.valueOf(st[1].split("/")[0]);
-			int startDown = Integer.valueOf(st[1].split("/")[1]);
-			rotateEvents.put(new JSONObject().put("bezier", 0).put("bezierPoints", new JSONArray().put(0d).put(0d).put(0d).put(0d)).put("easingLeft", 0d).put("easingRight", 1d).put("easingType", easingType).put("end", end).put("endTime", new JSONArray().put(endNum).put(endUp).put(endDown)).put("linkgroup", 0).put("start", start).put("startTime", new JSONArray().put(startNum).put(startUp).put(startDown)));
+			Fraction et = new Fraction(endTime);
+			Fraction st = new Fraction(startTime);
+			rotateEvents.put(new JSONObject().put("bezier", 0).put("bezierPoints", new JSONArray().put(0d).put(0d).put(0d).put(0d)).put("easingLeft", 0d).put("easingRight", 1d).put("easingType", easingType).put("end", end).put("endTime", et.toJSONArray()).put("linkgroup", 0).put("start", start).put("startTime", st.toJSONArray()));
 			sortAll();
 			return this;
 		} catch (Exception e) {
@@ -200,15 +176,9 @@ public class Line extends Object {
 	}
 	public Line addSpeedEvent(double end, String endTime, double start, String startTime) {
 		try {
-			String[] et = endTime.split(":");
-			int endNum = Integer.valueOf(et[0]);
-			int endUp = Integer.valueOf(et[1].split("/")[0]);
-			int endDown = Integer.valueOf(et[1].split("/")[1]);
-			String[] st = startTime.split(":");
-			int startNum = Integer.valueOf(st[0]);
-			int startUp = Integer.valueOf(st[1].split("/")[0]);
-			int startDown = Integer.valueOf(st[1].split("/")[1]);
-			speedEvents.put(new JSONObject().put("end", end).put("endTime", new JSONArray().put(endNum).put(endUp).put(endDown)).put("linkgroup", 0).put("start", start).put("startTime", new JSONArray().put(startNum).put(startUp).put(startDown)));
+			Fraction et = new Fraction(endTime);
+			Fraction st = new Fraction(startTime);
+			speedEvents.put(new JSONObject().put("end", end).put("endTime", et.toJSONArray()).put("linkgroup", 0).put("start", start).put("startTime", st.toJSONArray()));
 			sortAll();
 			return this;
 		} catch (Exception e) {
@@ -218,15 +188,9 @@ public class Line extends Object {
 	}
 	public Line addNote(int above, int alpha, String endTime, int isFake, double positionX, double size, double speed, String startTime, int type, double yOffset) {
 		try {
-			String[] end = endTime.split(":");
-			int endNum = Integer.valueOf(end[0]);
-			int endUp = Integer.valueOf(end[1].split("/")[0]);
-			int endDown = Integer.valueOf(end[1].split("/")[1]);
-			String[] start = startTime.split(":");
-			int startNum = Integer.valueOf(start[0]);
-			int startUp = Integer.valueOf(start[1].split("/")[0]);
-			int startDown = Integer.valueOf(start[1].split("/")[1]);
-			notes.put(new JSONObject().put("above", above).put("alpha", alpha).put("endTime", new JSONArray().put(endNum).put(endUp).put(endDown)).put("isFake", isFake).put("positionX", positionX).put("size", size).put("speed", speed).put("startTime", new JSONArray().put(startNum).put(startUp).put(startDown)).put("type", type).put("visibleTime", 999999d).put("yOffset", yOffset));
+			Fraction et = new Fraction(endTime);
+			Fraction st = new Fraction(startTime);
+			notes.put(new JSONObject().put("above", above).put("alpha", alpha).put("endTime", et.toJSONArray()).put("isFake", isFake).put("positionX", positionX).put("size", size).put("speed", speed).put("startTime", st.toJSONArray()).put("type", type).put("visibleTime", 999999d).put("yOffset", yOffset));
 			sortAll();
 			numOfNotes++;
 			return this;
@@ -270,7 +234,7 @@ public class Line extends Object {
 		try {
 			StringWriter sw = new StringWriter();
 			e.printStackTrace(new PrintWriter(sw, true));
-			BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("/storage/emulated/0/Android/data/" + MainActivity.packageName + File.separator + System.currentTimeMillis() + ".log")));
+			BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(MainActivity.temp + File.separator + System.currentTimeMillis() + ".log")));
 			bw.write(sw.toString());
 			bw.close();
 		} catch (Exception nothing) {}

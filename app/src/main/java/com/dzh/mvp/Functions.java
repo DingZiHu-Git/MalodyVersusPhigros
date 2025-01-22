@@ -15,6 +15,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -29,7 +30,7 @@ public class Functions {
 	public File dir = new File("/storage/emulated/0/data/MVP");
 	public String convert(boolean keyToSlide, boolean bpm, boolean scroll, boolean wide, int slide, boolean guide, String guideInterval, boolean randomFalling, boolean luck, double speed, double position, String illustrator){
 		try {
-			final Integer[] interval = new Integer[]{ Integer.valueOf(guideInterval.substring(0, guideInterval.indexOf(":"))), Integer.valueOf(guideInterval.substring(guideInterval.indexOf(":") + 1, guideInterval.indexOf("/"))), Integer.valueOf(guideInterval.substring(guideInterval.indexOf("/") + 1)) };
+			final Fraction interval = new Fraction(Integer.valueOf(guideInterval.substring(0, guideInterval.indexOf(":"))), Integer.valueOf(guideInterval.substring(guideInterval.indexOf(":") + 1, guideInterval.indexOf("/"))), Integer.valueOf(guideInterval.substring(guideInterval.indexOf("/") + 1)));
 			BufferedReader setbr = new BufferedReader(new InputStreamReader(new FileInputStream(MainActivity.settings), "UTF-8"));
 			JSONObject setjo = new JSONObject(setbr.readLine());
 			boolean deleteConverted = setjo.getBoolean("delete_converted");
@@ -78,15 +79,9 @@ public class Functions {
 								JSONObject ln = new JSONObject();
 								JSONArray segs = new JSONArray();
 								JSONObject seg = new JSONObject();
-								String[] endbeat = fractionAddition(String.valueOf(item.getJSONArray("endbeat").getInt(0) * item.getJSONArray("endbeat").getInt(2) + item.getJSONArray("endbeat").getInt(1)) + "/" + String.valueOf(item.getJSONArray("endbeat").getInt(2)) + "-" + String.valueOf(item.getJSONArray("beat").getInt(0) * item.getJSONArray("beat").getInt(2) + item.getJSONArray("beat").getInt(1)) + "/" + item.getJSONArray("beat").getInt(2)).split("/");
-								int ef = 0;
-								int es = Integer.valueOf(endbeat[0]);
-								int et = Integer.valueOf(endbeat[1]);
-								while (es >= et){
-									es = es - et;
-									ef++;
-								}
-								seg.put("beat", new JSONArray().put(ef).put(es).put(et)).put("x", 0);
+								Fraction beat = new Fraction(item.getJSONArray("beat"));
+								Fraction endbeat = new Fraction(item.getJSONArray("endbeat")).subtract(beat);
+								seg.put("beat", endbeat.toJSONArray()).put("x", 0);
 								segs.put(seg);
 								ln.put("beat", item.getJSONArray("beat")).put("x", x).put("w", 51).put("seg", segs);
 								noteSlide.put(ln);
@@ -169,35 +164,55 @@ public class Functions {
 						final List<Double[]> speeds = new ArrayList<Double[]>();
 						if (bpm) for (int j = 0; j < time.length(); j++) speeds.add(new Double[]{ time.getJSONObject(j).getJSONArray("beat").getDouble(0), time.getJSONObject(j).getJSONArray("beat").getDouble(1), time.getJSONObject(j).getJSONArray("beat").getDouble(2), time.getJSONObject(j).getDouble("bpm") / BPM });
 						if (scroll) for (int j = 0; j < effect.length(); j++) {
-							if (effect.getJSONObject(j).has("scroll")) speeds.add(new Double[]{ effect.getJSONObject(j).getJSONArray("beat").getDouble(0), effect.getJSONObject(j).getJSONArray("beat").getDouble(1), effect.getJSONObject(j).getJSONArray("beat").getDouble(2), effect.getJSONObject(j).getDouble("scroll") });
-							else if (effect.getJSONObject(j).has("sv")) speeds.add(new Double[]{ effect.getJSONObject(j).getJSONArray("beat").getDouble(0), effect.getJSONObject(j).getJSONArray("beat").getDouble(1), effect.getJSONObject(j).getJSONArray("beat").getDouble(2), effect.getJSONObject(j).getDouble("sv") });
+							for (int k = 0; k < speeds.size(); k++) {
+								if (effect.getJSONObject(j).has("scroll")) {
+									if (new Fraction(effect.getJSONObject(j).getJSONArray("beat")).equals(new Fraction(speeds.get(k)[0].intValue(), speeds.get(k)[1].intValue(), speeds.get(k)[2].intValue()))) speeds.set(k, new Double[]{ speeds.get(k)[0], speeds.get(k)[1], speeds.get(k)[2], speeds.get(k)[3] * effect.getJSONObject(j).getDouble("scroll") });
+									else speeds.add(new Double[]{ effect.getJSONObject(j).getJSONArray("beat").getDouble(0), effect.getJSONObject(j).getJSONArray("beat").getDouble(1), effect.getJSONObject(j).getJSONArray("beat").getDouble(2), effect.getJSONObject(j).getDouble("scroll") });
+								} else if (effect.getJSONObject(j).has("sv")) {
+									if (new Fraction(effect.getJSONObject(j).getJSONArray("beat")).equals(new Fraction(speeds.get(k)[0].intValue(), speeds.get(k)[1].intValue(), speeds.get(k)[2].intValue()))) speeds.set(k, new Double[]{ speeds.get(k)[0], speeds.get(k)[1], speeds.get(k)[2], speeds.get(k)[3] * effect.getJSONObject(j).getDouble("sv") });
+									else speeds.add(new Double[]{ effect.getJSONObject(j).getJSONArray("beat").getDouble(0), effect.getJSONObject(j).getJSONArray("beat").getDouble(1), effect.getJSONObject(j).getJSONArray("beat").getDouble(2), effect.getJSONObject(j).getDouble("sv") });
+								}
+							}
 						}
 						for (int j = 0; j < speeds.size(); j++) lines.get(0).addSpeedEvent(speeds.get(j)[3] * speed, String.valueOf((j == speeds.size() - 1) ? (speeds.get(j)[1].intValue() + 1) : speeds.get(j + 1)[0].intValue()) + ":" + speeds.get(j + (j == speeds.size() - 1 ? 0 : 1))[1].intValue() + "/" + speeds.get(j + (j == speeds.size() - 1 ? 0 : 1))[2].intValue(), speeds.get(j)[3] * speed, String.valueOf(speeds.get(j)[0].intValue()) + ":" + speeds.get(j)[1].intValue() + "/" + speeds.get(j)[2].intValue());
 						if (mode == 0){
 							type = mode_ext.getInt("column") + "K";
-							for (int j = 0; j < note.length(); j++){
+							Fraction[] occupy = new Fraction[mode_ext.getInt("column")];
+							for (int j = 0; j < occupy.length - 1; j++) occupy[j] = new Fraction(-1, 0, 1);
+							for (int j = 0; j < note.length(); j++) {
 								JSONObject jo = note.getJSONObject(j);
 								if (jo.has("sound")) music = new File(MainActivity.temp.getPath() + File.separator + jo.getString("sound"));
-								else if (jo.has("endbeat")){
-									JSONArray endTime = jo.getJSONArray("endbeat");
-									JSONArray startTime = jo.getJSONArray("beat");
-									int ef = endTime.getInt(0);
-									int es = endTime.getInt(1);
-									int et = endTime.getInt(2);
-									int sf = startTime.getInt(0);
-									int ss = startTime.getInt(1);
-									int st = startTime.getInt(2);
+								else if (jo.has("endbeat")) {
+									Fraction endTime = new Fraction(jo.getJSONArray("endbeat"));
+									Fraction startTime = new Fraction(jo.getJSONArray("beat"));
 									int track = jo.getInt("column");
-									double positionX = 1350.0 / Double.valueOf(mode_ext.getInt("column") + 1) * Double.valueOf((luck ? Random.nextInt(0, mode_ext.getInt("column") - 1) : track) + 1) - 675.0;
-									lines.get(0).addNote(randomFalling ? Random.nextInt(0, 1) : 1, 255, String.valueOf(ef) + ":" + es + "/" + et, 0, positionX, 1d, 1d, String.valueOf(sf) + ":" + ss + "/" + st, 2, 0d);
+									if (luck) {
+										track = Random.nextInt(0, jo.getInt("column") - 1);
+										while (true) {
+											if (startTime.gt(occupy[track])) {
+												occupy[track] = endTime;
+												break;
+											}
+											track = Random.nextInt(0, jo.getInt("column") - 1);
+										}
+									}
+									double positionX = 1350.0 / Double.valueOf(mode_ext.getInt("column") + 1) * Double.valueOf(track + 1) - 675.0;
+									lines.get(0).addNote(randomFalling ? Random.nextInt(0, 1) : 1, 255, endTime.toString(), 0, positionX, 1d, 1d, startTime.toString(), 2, 0d);
 								} else {
-									JSONArray startTime = jo.getJSONArray("beat");
-									int f = startTime.getInt(0);
-									int s = startTime.getInt(1);
-									int t = startTime.getInt(2);
+									Fraction startTime = new Fraction(jo.getJSONArray("beat"));
 									int track = jo.getInt("column");
-									double positionX = 1350.0 / Double.valueOf(mode_ext.getInt("column") + 1) * Double.valueOf((luck ? Random.nextInt(0, mode_ext.getInt("column") - 1) : track) + 1) - 675.0;
-									lines.get(0).addNote(randomFalling ? Random.nextInt(0, 1) : 1, 255, String.valueOf(f) + ":" + s + "/" + t, 0, positionX, 1d, 1d, String.valueOf(f) + ":" + s + "/" + t, 1, 0d);
+									if (luck) {
+										track = Random.nextInt(0, jo.getInt("column") - 1);
+										while (true) {
+											if (startTime.gt(occupy[track])) {
+												occupy[track] = startTime;
+												break;
+											}
+											track = Random.nextInt(0, jo.getInt("column") - 1);
+										}
+									}
+									double positionX = 1350.0 / Double.valueOf(mode_ext.getInt("column") + 1) * Double.valueOf(track + 1) - 675.0;
+									lines.get(0).addNote(randomFalling ? Random.nextInt(0, 1) : 1, 255, startTime.toString(), 0, positionX, 1d, 1d, startTime.toString(), 1, 0d);
 								}
 							}
 						} else if (mode == 3){
@@ -206,12 +221,9 @@ public class Functions {
 								JSONObject jo = note.getJSONObject(j);
 								if (jo.has("sound")) music = new File(MainActivity.temp.getPath() + File.separator + jo.getString("sound"));
 								else if (!jo.has("endbeat")){
-									JSONArray startTime = jo.getJSONArray("beat");
-									int f = startTime.getInt(0);
-									int s = startTime.getInt(1);
-									int t = startTime.getInt(2);
+									Fraction startTime = new Fraction(jo.getJSONArray("beat"));
 									double positionX = (jo.getInt("x") - 256.0) / 256.0 * 675.0;
-									lines.get(0).addNote(randomFalling ? Random.nextInt(0, 1) : 1, 255, String.valueOf(f) + ":" + s + "/" + t, 0, positionX, 1d, 1d, String.valueOf(f) + ":" + s + "/" + t, 1, 0d);
+									lines.get(0).addNote(randomFalling ? Random.nextInt(0, 1) : 1, 255, startTime.toString(), 0, positionX, 1d, 1d, startTime.toString(), 1, 0d);
 								}
 							}
 						} else if (mode == 5){
@@ -220,74 +232,44 @@ public class Functions {
 							double positionXBlue = -405.0;
 							for (int j = 0; j < note.length(); j++){
 								JSONObject jo = note.getJSONObject(j);
-								JSONArray beat = jo.getJSONArray("beat");
-								JSONArray endbeat = null;
-								if (jo.has("endbeat")) endbeat = jo.getJSONArray("endbeat");
-								int f = beat.getInt(0);
-								int s = beat.getInt(1);
-								int t = beat.getInt(2);
+								Fraction beat = new Fraction(jo.getJSONArray("beat"));
+								Fraction endbeat = null;
+								if (jo.has("endbeat")) endbeat = new Fraction(jo.getJSONArray("endbeat"));
 								if (jo.has("sound")) music = new File(MainActivity.temp.getPath() + File.separator + jo.getString("sound"));
 								else switch (jo.getInt("style")){
 									case 0:
-										lines.get(0).addNote(randomFalling ? Random.nextInt(0, 1) : 1, 255, String.valueOf(f) + ":" + s + "/" + t, 0, positionXRed, 1d, 1d, String.valueOf(f) + ":" + s + "/" + t, 1, 0d);
+										lines.get(0).addNote(randomFalling ? Random.nextInt(0, 1) : 1, 255, beat.toString(), 0, positionXRed, 1d, 1d, beat.toString(), 1, 0d);
 										positionXRed = -positionXRed;
 										break;
 									case 1:
-										lines.get(0).addNote(randomFalling ? Random.nextInt(0, 1) : 1, 255, String.valueOf(f) + ":" + s + "/" + t, 0, positionXRed, 1d, 1d, String.valueOf(f) + ":" + s + "/" + t, 1, 0d);
-										lines.get(0).addNote(randomFalling ? Random.nextInt(0, 1) : 1, 255, String.valueOf(f) + ":" + s + "/" + t, 0, -positionXRed, 1d, 1d, String.valueOf(f) + ":" + s + "/" + t, 1, 0d);
+										lines.get(0).addNote(randomFalling ? Random.nextInt(0, 1) : 1, 255, beat.toString(), 0, positionXRed, 1d, 1d, beat.toString(), 1, 0d);
+										lines.get(0).addNote(randomFalling ? Random.nextInt(0, 1) : 1, 255, beat.toString(), 0, -positionXRed, 1d, 1d, beat.toString(), 1, 0d);
 										break;
 									case 2:
-										lines.get(0).addNote(randomFalling ? Random.nextInt(0, 1) : 1, 255, String.valueOf(f) + ":" + s + "/" + t, 0, positionXBlue, 1d, 1d, String.valueOf(f) + ":" + s + "/" + t, 1, 0d);
+										lines.get(0).addNote(randomFalling ? Random.nextInt(0, 1) : 1, 255, beat.toString(), 0, positionXBlue, 1d, 1d, beat.toString(), 1, 0d);
 										positionXBlue = -positionXBlue;
 										break;
 									case 3:
-										lines.get(0).addNote(randomFalling ? Random.nextInt(0, 1) : 1, 255, String.valueOf(f) + ":" + s + "/" + t, 0, positionXBlue, 1d, 1d, String.valueOf(f) + ":" + s + "/" + t, 1, 0d);
-										lines.get(0).addNote(randomFalling ? Random.nextInt(0, 1) : 1, 255, String.valueOf(f) + ":" + s + "/" + t, 0, -positionXBlue, 1d, 1d, String.valueOf(f) + ":" + s + "/" + t, 1, 0d);
+										lines.get(0).addNote(randomFalling ? Random.nextInt(0, 1) : 1, 255, beat.toString(), 0, positionXBlue, 1d, 1d, beat.toString(), 1, 0d);
+										lines.get(0).addNote(randomFalling ? Random.nextInt(0, 1) : 1, 255, beat.toString(), 0, -positionXBlue, 1d, 1d, beat.toString(), 1, 0d);
 										break;
 									case 4:
-										while (f + s / Double.valueOf(t) + 1 / 4.0 < endbeat.getInt(0) + endbeat.getInt(1) / Double.valueOf(endbeat.getInt(2))){
-											lines.get(0).addNote(randomFalling ? Random.nextInt(0, 1) : 1, 255, String.valueOf(f) + ":" + s + "/" + t, 0, positionXRed, 1d, 1d, String.valueOf(f) + ":" + s + "/" + t, 1, 0d);
-											String[] next = fractionAddition(s + "/" + t + "+1/4").split("/");
-											s = Integer.valueOf(next[0]);
-											t = Integer.valueOf(next[1]);
-											while (s >= t){
-												s -= t;
-												f++;
-											}
+										while (beat.add(new Fraction(0, 1, 4)).lt(endbeat)){
+											lines.get(0).addNote(randomFalling ? Random.nextInt(0, 1) : 1, 255, beat.toString(), 0, positionXRed, 1d, 1d, beat.toString(), 1, 0d);
 											positionXRed = -positionXRed;
 										}
 										break;
 									case 5:
-										while (f + s / Double.valueOf(t) + 1 / 4.0 < endbeat.getInt(0) + endbeat.getInt(1) / Double.valueOf(endbeat.getInt(2))){
-											lines.get(0).addNote(randomFalling ? Random.nextInt(0, 1) : 1, 255, String.valueOf(f) + ":" + s + "/" + t, 0, positionXRed, 1d, 1d, String.valueOf(f) + ":" + s + "/" + t, 1, 0d);
-											String[] next = fractionAddition(s + "/" + t + "+1/4").split("/");
-											s = Integer.valueOf(next[0]);
-											t = Integer.valueOf(next[1]);
-											while (s >= t){
-												s -= t;
-												f++;
-											}
+										while (beat.add(new Fraction(0, 1, 4)).lt(endbeat)){
+											lines.get(0).addNote(randomFalling ? Random.nextInt(0, 1) : 1, 255, beat.toString(), 0, positionXRed, 1d, 1d, beat.toString(), 1, 0d);
 											positionXRed = -positionXRed;
 										}
 										break;
 									case 6:
-										String[] delta = fractionAddition((endbeat.getInt(0) * endbeat.getInt(2) + endbeat.getInt(1)) + "/" + endbeat.getInt(2) + "-" + (f * t + s) + "/" + t).split("/");
-										int deltaF = 0;
-										int deltaS = Integer.valueOf(delta[0]);
-										int deltaT = Integer.valueOf(delta[1]);
-										while (deltaS >= deltaT){
-											deltaS -= deltaT;
-											deltaF++;
-										}
+										Fraction delta = endbeat.subtract(beat).divide(new Fraction(jo.getInt("hits"), 0, 1));
 										for (int k = 0; k < jo.getInt("hits"); k++){
-											lines.get(0).addNote(randomFalling ? Random.nextInt(0, 1) : 1, 255, String.valueOf(f) + ":" + s + "/" + t, 0, positionXRed, 1d, 1d, String.valueOf(f) + ":" + s + "/" + t, 1, 0d);
-											String[] next = fractionAddition(s + "/" + t + "+" + (deltaF * deltaT + deltaS) + "/" + deltaT * jo.getInt("hits")).split("/");
-											s = Integer.valueOf(next[0]);
-											t = Integer.valueOf(next[1]);
-											while (s >= t){
-												s -= t;
-												f++;
-											}
+											lines.get(0).addNote(randomFalling ? Random.nextInt(0, 1) : 1, 255, beat.toString(), 0, positionXRed, 1d, 1d, beat.toString(), 1, 0d);
+											beat.add(delta);
 											positionXRed = -positionXRed;
 										}
 										break;
@@ -300,94 +282,41 @@ public class Functions {
 								if (jo.has("sound")) music = new File(MainActivity.temp.getPath() + File.separator + jo.getString("sound"));
 								else if (jo.has("seg")) {
 									JSONArray seg = jo.getJSONArray("seg");
-									if (slide == 0 || (seg.length() == 1 && (!seg.getJSONObject(0).has("x") || seg.getJSONObject(0).getInt("x") == 0))) {
-										JSONArray endTime = seg.getJSONObject(seg.length() - 1).getJSONArray("beat");
-										JSONArray startTime = jo.getJSONArray("beat");
-										int ef = endTime.getInt(0);
-										int es = endTime.getInt(1);
-										int et = endTime.getInt(2);
-										int sf = startTime.getInt(0);
-										int ss = startTime.getInt(1);
-										int st = startTime.getInt(2);
-										ef = sf + ef;
-										String[] end = fractionAddition(String.valueOf(es) + "/" + String.valueOf(et) + "+" + String.valueOf(ss) + "/" + String.valueOf(st)).split("/");
-										es = Integer.valueOf(end[0]);
-										et = Integer.valueOf(end[1]);
-										while (es >= et) {
-											es = es - et;
-											ef++;
-										}
-										int x = jo.getInt("x");
-										double positionX = (x - 128.0) / 128.0 * 675.0;
-										double size = wide && jo.has("w") ? jo.getDouble("w") / 51d : 1.0;
-										lines.get(0).addNote(randomFalling ? Random.nextInt(0, 1) : 1, 255, String.valueOf(ef) + ":" + es + "/" + et, 0, positionX, size, 1d, String.valueOf(sf) + ":" + ss + "/" + st, 2, 0d);
-									} else if (slide == 1 || slide == 2) {
+									Fraction endTime = new Fraction(seg.getJSONObject(seg.length() - 1).getJSONArray("beat"));
+									Fraction startTime = new Fraction(jo.getJSONArray("beat"));
+									endTime.add(startTime);
+									int x = jo.getInt("x");
+									double positionX = (x - 128d) / 128d * 675d;
+									double size = wide && jo.has("w") ? jo.getDouble("w") / 51d : 1d;
+									if (slide == 0 || (seg.length() == 1 && (!seg.getJSONObject(0).has("x") || seg.getJSONObject(0).getInt("x") == 0))) lines.get(0).addNote(randomFalling ? Random.nextInt(0, 1) : 1, 255, endTime.toString(), 0, positionX, size, 1d, startTime.toString(), 2, 0d);
+									else if (slide == 1 || slide == 2) {
 										Line hold = null;
 										if (slide == 2) {
 											hold = new Line("main").init(0, 0d, 0d, 0d, speed);
 											hold.father = 0;
 										}
 										int falling = randomFalling ? Random.nextInt(0, 1) : 1;
-										JSONArray endTime = seg.getJSONObject(seg.length() - 1).getJSONArray("beat");
-										JSONArray startTime = jo.getJSONArray("beat");
-										int ef = endTime.getInt(0);
-										int es = endTime.getInt(1);
-										int et = endTime.getInt(2);
-										int sf = startTime.getInt(0);
-										int ss = startTime.getInt(1);
-										int st = startTime.getInt(2);
-										ef = sf + ef;
-										String[] end = fractionAddition(String.valueOf(es) + "/" + String.valueOf(et) + "+" + String.valueOf(ss) + "/" + String.valueOf(st)).split("/");
-										es = Integer.valueOf(end[0]);
-										et = Integer.valueOf(end[1]);
-										while (es >= et) {
-											es = es - et;
-											ef++;
-										}
-										int x = jo.getInt("x");
-										double positionX = (x - 128.0) / 128.0 * 675.0;
-										double size = wide && jo.has("w") ? jo.getDouble("w") / 51d : 1.0;
-										if (slide == 1) lines.get(0).addNote(falling, 255, String.valueOf(sf) + ":" + ss + "/" + st, 0, positionX, wide ? size : 1d, 1d, String.valueOf(sf) + ":" + ss + "/" + st, 1, 0d);
-										else hold.addNote(falling, 255, String.valueOf(ef) + ":" + es + "/" + et, 0, positionX, size, 1d, String.valueOf(sf) + ":" + ss + "/" + st, 2, 0d);
+										if (slide == 1) lines.get(0).addNote(falling, 255, startTime.toString(), 0, positionX, wide ? size : 1d, 1d, startTime.toString(), 1, 0d);
+										else hold.addNote(falling, 255, endTime.toString(), 0, positionX, size, 1d, startTime.toString(), 2, 0d);
 										double lastPositionX = 0;
-										int lastF = sf;
-										int lastS = ss;
-										int lastT = st;
-										int currentF = sf;
-										int currentS = ss;
-										int currentT = st;
+										Fraction last = startTime.clone();
+										Fraction current = startTime.clone();
 										for (int k = 0; k < seg.length(); k++) {
 											int moveX = 0;
 											if (seg.getJSONObject(k).has("x")) moveX = seg.getJSONObject(k).getInt("x");
-											int segF = seg.getJSONObject(k).getJSONArray("beat").getInt(0);
-											int segS = seg.getJSONObject(k).getJSONArray("beat").getInt(1);
-											int segT = seg.getJSONObject(k).getJSONArray("beat").getInt(2);
-											int moveF = sf + segF;
-											String[] move = fractionAddition(String.valueOf(segS) + "/" + String.valueOf(segT) + "+" + String.valueOf(ss) + "/" + String.valueOf(st)).split("/");
-											int moveS = Integer.valueOf(move[0]);
-											int moveT = Integer.valueOf(move[1]);
-											while (moveS >= moveT) {
-												moveS = moveS - moveT;
-												moveF++;
-											}
-											double movePositionX = moveX / 128.0 * 675.0;
+											Fraction segf = new Fraction(seg.getJSONObject(k).getJSONArray("beat"));
+											segf.add(startTime);
+											Fraction move = startTime.add(segf);
+											double movePositionX = moveX / 128d * 675d;
 											if (slide == 1 || (slide == 2 && guide)) {
-												double v = (movePositionX - lastPositionX) / ((moveF + moveS / Double.valueOf(moveT)) - (lastF + lastS / Double.valueOf(lastT)));
-												while ((currentF + currentS / Double.valueOf(currentT)) + (interval[0] + interval[1] / Double.valueOf(interval[2])) <= moveF + moveS / Double.valueOf(moveT)){
-													String[] current = fractionAddition(String.valueOf(currentS) + "/" + String.valueOf(currentT) + "+" + String.valueOf(interval[0] * interval[2] + interval[1]) + "/" + String.valueOf(interval[2])).split("/");
-													currentS = Integer.valueOf(current[0]);
-													currentT = Integer.valueOf(current[1]);
-													while (currentS >= currentT){
-														currentS = currentS - currentT;
-														currentF++;
-													}
-													lines.get(0).addNote(falling, slide == 1 ? 255 : 128, String.valueOf(currentF) + ":" + currentS + "/" + currentT, slide == 1 ? 0 : 1, positionX + lastPositionX + v * ((currentF + currentS / Double.valueOf(currentT)) - (lastF + lastS / Double.valueOf(lastT))), wide ? size : 1d, 1d, String.valueOf(currentF) + ":" + currentS + "/" + currentT, 4, 0d);
+												double v = (movePositionX - lastPositionX) / (move.clone().subtract(last).toBigDecimal().doubleValue());
+												while (current.add(interval).gt(move)){
+													current.add(interval);
+													lines.get(0).addNote(falling, slide == 1 ? 255 : 128, current.toString(), slide == 1 ? 0 : 1, positionX + lastPositionX + v * current.clone().subtract(last).toBigDecimal().doubleValue(), wide ? size : 1d, 1d, current.toString(), 4, 0d);
 												}
 											}
-											if (slide == 2) hold.addMoveXEvent(1, 1, movePositionX, String.valueOf(moveF) + ":" + moveS + "/" + moveT, lastPositionX, String.valueOf(lastF) + ":" + lastS + "/" + lastT);
-											lastF = moveF;
-											lastS = moveS;
-											lastT = moveT;
+											if (slide == 2) hold.addMoveXEvent(1, 1, movePositionX, move.toString(), lastPositionX, last.toString());
+											last = move;
 											lastPositionX = movePositionX;
 										}
 										if (hold != null) {
@@ -395,66 +324,39 @@ public class Functions {
 											lines.add(hold);
 										}
 									} else {
-										JSONArray endTime = seg.getJSONObject(seg.length() - 1).getJSONArray("beat");
-										JSONArray startTime = jo.getJSONArray("beat");
-										int ef = endTime.getInt(0);
-										int es = endTime.getInt(1);
-										int et = endTime.getInt(2);
-										int sf = startTime.getInt(0);
-										int ss = startTime.getInt(1);
-										int st = startTime.getInt(2);
-										ef = sf + ef;
-										String[] end = fractionAddition(String.valueOf(es) + "/" + String.valueOf(et) + "+" + String.valueOf(ss) + "/" + String.valueOf(st)).split("/");
-										es = Integer.valueOf(end[0]);
-										et = Integer.valueOf(end[1]);
-										while (es >= et){
-											es = es - et;
-											ef++;
-										}
-										int x = jo.getInt("x");
-										double positionX = (x - 128.0) / 128.0 * 675.0;
-										double size = wide && jo.has("w") ? jo.getDouble("w") / 51d : 1.0;
-										lines.get(0).addNote(randomFalling ? Random.nextInt(0, 1) : 1, 255, String.valueOf(ef) + ":" + es + "/" + et, 0, positionX, wide ? size : 1d, 1d, String.valueOf(sf) + ":" + ss + "/" + st, 2, 0d);
+										endTime.add(startTime);
+										lines.get(0).addNote(randomFalling ? Random.nextInt(0, 1) : 1, 255, endTime.toString(), 0, positionX, wide ? size : 1d, 1d, startTime.toString(), 2, 0d);
 									}
 								} else if (jo.has("type")){
-									JSONArray startTime = jo.getJSONArray("beat");
-									int f = startTime.getInt(0);
-									int s = startTime.getInt(1);
-									int t = startTime.getInt(2);
+									Fraction startTime = new Fraction(jo.getJSONArray("beat"));
 									int x = jo.getInt("x");
-									double positionX = (x - 128.0) / 128.0 * 675.0;
-									double size = wide && jo.has("w") ? jo.getDouble("w") / 51d : 1.0;
-									if (jo.has("dir")) lines.get(0).addNote(randomFalling ? Random.nextInt(0, 1) : 1, 255, String.valueOf(f) + ":" + s + "/" + t, 0, positionX, size, 1d, String.valueOf(f) + ":" + s + "/" + t, 3, 0d);
-									else lines.get(0).addNote(randomFalling ? Random.nextInt(0, 1) : 1, 255, String.valueOf(f) + ":" + s + "/" + t, 0, positionX, size, 1d, String.valueOf(f) + ":" + s + "/" + t, 4, 0d);
+									double positionX = (x - 128d) / 128d * 675d;
+									double size = wide && jo.has("w") ? jo.getDouble("w") / 51d : 1d;
+									if (jo.has("dir")) lines.get(0).addNote(randomFalling ? Random.nextInt(0, 1) : 1, 255, startTime.toString(), 0, positionX, size, 1d, startTime.toString(), 3, 0d);
+									else lines.get(0).addNote(randomFalling ? Random.nextInt(0, 1) : 1, 255, startTime.toString(), 0, positionX, size, 1d, startTime.toString(), 4, 0d);
 								} else if (jo.has("dir")){
 									int falling = randomFalling ? Random.nextInt(0, 1) : 1;
-									JSONArray startTime = jo.getJSONArray("beat");
-									int f = startTime.getInt(0);
-									int s = startTime.getInt(1);
-									int t = startTime.getInt(2);
+									Fraction startTime = new Fraction(jo.getJSONArray("beat"));
 									int x = jo.getInt("x");
-									double positionX = (x - 128.0) / 128.0 * 675.0;
+									double positionX = (x - 128d) / 128d * 675d;
 									double flickPositionX = positionX;
 									switch (jo.getInt("dir")){
 										case 8:
-											flickPositionX = positionX - 100.0;
+											flickPositionX = positionX - 100d;
 											break;
 										case 2:
-											flickPositionX = positionX + 100.0;
+											flickPositionX = positionX + 100d;
 											break;
 									}
-									double size = wide && jo.has("w") ? jo.getDouble("w") / 51d : 1.0;
-									lines.get(0).addNote(falling, 255, String.valueOf(f) + ":" + s + "/" + t, 0, positionX, size, 1d, String.valueOf(f) + ":" + s + "/" + t, 1, 0d);
-									lines.get(0).addNote(falling, 255, String.valueOf(f) + ":" + (32 / t * s + 1) + "/" + 32, 0, flickPositionX, size, 1d, String.valueOf(f) + ":" + (32 / t * s + 1) + "/" + 32, 3, 0d);
+									double size = wide && jo.has("w") ? jo.getDouble("w") / 51d : 1d;
+									lines.get(0).addNote(falling, 255, startTime.toString(), 0, positionX, size, 1d, startTime.toString(), 1, 0d);
+									lines.get(0).addNote(falling, 255, startTime.clone().add(new Fraction(0, 1, 32)).toString(), 0, flickPositionX, size, 1d, startTime.clone().add(new Fraction(0, 1, 32)).toString(), 3, 0d);
 								} else {
-									JSONArray startTime = jo.getJSONArray("beat");
-									int f = startTime.getInt(0);
-									int s = startTime.getInt(1);
-									int t = startTime.getInt(2);
+									Fraction startTime = new Fraction(jo.getJSONArray("beat"));
 									int x = jo.getInt("x");
-									double positionX = (x - 128.0) / 128.0 * 675.0;
-									double size = wide && jo.has("w") ? jo.getDouble("w") / 51d : 1.0;
-									lines.get(0).addNote(randomFalling ? Random.nextInt(0, 1) : 1, 255, String.valueOf(f) + ":" + s + "/" + t, 0, positionX, size, 1d, String.valueOf(f) + ":" + s + "/" + t, 1, 0d);
+									double positionX = (x - 128d) / 128d * 675d;
+									double size = wide && jo.has("w") ? jo.getDouble("w") / 51d : 1d;
+									lines.get(0).addNote(randomFalling ? Random.nextInt(0, 1) : 1, 255, startTime.toString(), 0, positionX, size, 1d, startTime.toString(), 1, 0d);
 								}
 							}
 						}
@@ -656,8 +558,8 @@ public class Functions {
 							if (line.equals("[Events]")) events = true;
 							if (hitObjects){
 								String[] objects = line.split(",");
-								if (objects[5].split(":").length > 4) js.object().key("type").value(3).key("time").value((int) (Integer.valueOf(objects[2]) / 1000.0 * (120.0 / 1.875))).key("positionX").value(160 / 9d / (cs + 1) * ((luck ? Random.nextInt(0, cs - 1) : (Integer.valueOf(objects[0]) * cs / 512)) + 1) - 80 / 9d).key("holdTime").value((int) ((Integer.valueOf(objects[5].split(":")[0]) - Integer.valueOf(objects[2])) / 1000.0 * (120.0 / 1.875))).key("speed").value(2 / 9d * speed).key("floorPosition").value(1.875 / 120.0 * (Integer.valueOf(objects[2]) / 1000.0 * (120.0 / 1.875)) * (2 / 9d * speed)).endObject();
-								else js.object().key("type").value(1).key("time").value((int) (Integer.valueOf(objects[2]) / 1000.0 * (120.0 / 1.875))).key("positionX").value(160 / 9d / (cs + 1) * ((luck ? Random.nextInt(0, cs - 1) : (Integer.valueOf(objects[0]) * cs / 512)) + 1) - 80 / 9d).key("holdTime").value(0).key("speed").value(1.0).key("floorPosition").value(1.875 / 120.0 * (Integer.valueOf(objects[2]) / 1000.0 * (120.0 / 1.875)) * (2 / 9d * speed)).endObject();
+								if (objects[5].split(":").length > 4) js.object().key("type").value(3).key("time").value((int) (Integer.valueOf(objects[2]) / 1000d * (120d / 1.875))).key("positionX").value(160 / 9d / (cs + 1) * ((luck ? Random.nextInt(0, cs - 1) : (Integer.valueOf(objects[0]) * cs / 512)) + 1) - 80 / 9d).key("holdTime").value((int) ((Integer.valueOf(objects[5].split(":")[0]) - Integer.valueOf(objects[2])) / 1000d * (120d / 1.875))).key("speed").value(2 / 9d * speed).key("floorPosition").value(1.875 / 120d * (Integer.valueOf(objects[2]) / 1000d * (120d / 1.875)) * (2 / 9d * speed)).endObject();
+								else js.object().key("type").value(1).key("time").value((int) (Integer.valueOf(objects[2]) / 1000d * (120d / 1.875))).key("positionX").value(160 / 9d / (cs + 1) * ((luck ? Random.nextInt(0, cs - 1) : (Integer.valueOf(objects[0]) * cs / 512)) + 1) - 80 / 9d).key("holdTime").value(0).key("speed").value(1.0).key("floorPosition").value(1.875 / 120d * (Integer.valueOf(objects[2]) / 1000d * (120d / 1.875)) * (2 / 9d * speed)).endObject();
 							}
 							if (line.equals("[HitObjects]")) hitObjects = true;
 						}
@@ -752,55 +654,5 @@ public class Functions {
 			while ((length = fis.read(bs)) >= 0) zos.write(bs, 0, length);
 			fis.close();
 		}
-	}
-	private long ans1,ans2;
-	public String fractionAddition(String expression){
-		long a = 0, b = 0;
-		ans1 = 0; ans2 = 0;
-		boolean flag = false, mark = false;
-		for (int i = 0; i < expression.length(); i++){
-			if (expression.charAt(i) == '/'){
-				a = mark ? - a : a;
-				flag = true;
-				mark = false;
-				continue;
-			}
-			if (expression.charAt(i) == '-' || expression.charAt(i) == '+'){
-				work(ans1, ans2, a, b);
-				a = 0; b = 0; flag = false;
-				if (expression.charAt(i) == '-') mark = true;
-				continue;
-			}
-			if (!flag) a = a * 10 + expression.charAt(i) - '0';
-			else b = b * 10 + expression.charAt(i) - '0';
-			if (i == expression.length() - 1) work(ans1, ans2, a, b);
-		}
-		if (ans2 == 0) ans2 = 1;
-		StringBuilder str = new StringBuilder();
-		str.append(String.valueOf(ans1));
-		str.append('/');
-		str.append(String.valueOf(ans2));
-		return str.toString();
-	}
-	private void work(long a, long b, long c, long d){
-		if (b == 0 && a == 0){
-			ans1 = c;
-			ans2 = d;
-			return;
-		}
-		long res1 = a * d + b * c;
-		long res2 = b * d;
-		boolean flag = false;
-		if (res1 < 0){
-			flag = true;
-			res1 = - res1;
-		}
-		long tmp = gcd(res1, res2);
-		ans1 = res1 / tmp; ans2 = res2 / tmp;
-		if (flag) ans1 = - ans1;
-	}
-	private long gcd(long a, long b){
-		if (b == 0) return a;
-		return gcd(b, a % b);
 	}
 }

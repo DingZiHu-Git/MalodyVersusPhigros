@@ -28,13 +28,36 @@
 			android:layout_width="match_parent"
 			android:layout_height="match_parent">
 
+			<Switch
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:paddingTop="10dp"
+				android:paddingLeft="10dp"
+				android:paddingRight="10dp"
+				android:paddingBottom="3dp"
+				android:text="使用系统文件选择器"
+				android:id="@+id/system_file_selector"/>
+
+			<TextView
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:text="Android 11及以上建议开启\n不要问我为什么，问就是因为我是Android 10"
+				android:paddingLeft="10dp"
+				android:paddingRight="50dp"
+				android:paddingBottom="10dp"/>
+
+			<View
+				android:background="?android:attr/dividerVertical"
+				android:layout_width="match_parent"
+				android:layout_height="1dp"/>
+
 			<TextView
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
 				android:text="自制文件选择器的默认目录："
-				android:textColor="#FF000000"
-				android:textSize="20sp"
-				android:padding="10dp"/>
+				android:padding="10dp"
+				android:textAppearance="?android:attr/textAppearanceLarge"
+				android:textSize="18sp"/>
 
 			<LinearLayout
 				android:orientation="horizontal"
@@ -92,17 +115,12 @@
 				android:paddingRight="10dp"
 				android:paddingBottom="10dp"/>
 
-			<View
-				android:background="?android:attr/dividerVertical"
-				android:layout_width="match_parent"
-				android:layout_height="1dp"/>
-
 			<Button
 				android:layout_width="match_parent"
 				style="?android:attr/buttonBarButtonStyle"
 				android:layout_height="wrap_content"
-				android:text="Show file list"
-				android:id="@+id/show_file_list"/>
+				android:id="@+id/show_file_list"
+				android:visibility="visible"/>
 
 		</LinearLayout>
 

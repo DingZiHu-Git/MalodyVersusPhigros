@@ -7,6 +7,8 @@
 
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
 
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"/>
+
     <application
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
@@ -45,8 +47,8 @@
             android:label="设置"/>
 
         <activity
-			android:name=".LoadFromMalodyActivity"
-			android:label="从Malody本地谱面加载"/>
+            android:name=".LoadFromMalodyActivity"
+            android:label="从Malody本地谱面加载"/>
 
     </application>
 

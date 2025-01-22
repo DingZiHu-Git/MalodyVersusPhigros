@@ -317,7 +317,7 @@
 			<TextView
 				android:layout_width="match_parent"
 				android:layout_height="wrap_content"
-				android:text="随机调整所有音符的轨道（警告：音符可能会重叠）"
+				android:text="随机调整所有音符的轨道"
 				android:paddingLeft="10dp"
 				android:paddingRight="50dp"
 				android:paddingBottom="10dp"/>

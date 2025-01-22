@@ -96,10 +96,10 @@ public class LoadFromMalodyActivity extends AppCompatActivity {
 									String line = null;
 									while ((line = br.readLine()) != null) {
 									if (line.startsWith("AudioFilename:")) map.put("audio", d.getAbsolutePath() + File.separator + line.substring(line.indexOf(":") + 1).trim());
-										else if (line.startsWith("0,0,")) map.put("background", d.getAbsolutePath() + File.separator + line.split(",")[2].trim());
+										else if (line.startsWith("0,0,")) map.put("background", d.getAbsolutePath() + File.separator + line.split(",")[2].trim().substring(1, line.split(",")[2].trim().length() - 1));
 										else if (line.startsWith("Title:")) map.put("music", line.substring(line.indexOf(":") + 1).trim());
 										else if (line.startsWith("Artist:")) description[0] = "曲师：" + line.substring(line.indexOf(":") + 1).trim() + "\n";
-										else if (line.startsWith("Mode:")) description[1] = "模式：" + (Integer.parseInt(line.split(":")[1].trim()) == 3 ? "osu!mania(3)" : "未知(" + line.split(":")[1] + ")\n");
+										else if (line.startsWith("Mode:")) description[1] = "模式：" + (Integer.parseInt(line.split(":")[1].trim()) == 3 ? "osu!mania(3)\n" : "未知(" + line.split(":")[1] + ")\n");
 										else if (line.startsWith("Version:")) description[2] = "难度：" + line.substring(line.indexOf(":") + 1).trim() + "\n";
 										else if (line.startsWith("Creator:")) description[3] = "谱师：" + line.substring(line.indexOf(":") + 1).trim();
 									}
@@ -145,10 +145,10 @@ public class LoadFromMalodyActivity extends AppCompatActivity {
 										String line = null;
 										while ((line = br.readLine()) != null) {
 											if (line.startsWith("AudioFilename:")) map.put("audio", f.getAbsolutePath() + File.separator + line.substring(line.indexOf(":") + 1).trim());
-											else if (line.startsWith("0,0,")) map.put("background", f.getAbsolutePath() + File.separator + line.split(",")[2].trim());
+											else if (line.startsWith("0,0,")) map.put("background", f.getAbsolutePath() + File.separator + line.split(",")[2].trim().substring(1, line.split(",")[2].trim().length() - 1));
 											else if (line.startsWith("Title:")) map.put("music", line.substring(line.indexOf(":") + 1).trim());
 											else if (line.startsWith("Artist:")) description[0] = "曲师：" + line.substring(line.indexOf(":") + 1).trim() + "\n";
-											else if (line.startsWith("Mode:")) description[1] = "模式：" + (Integer.parseInt(line.split(":")[1].trim()) == 3 ? "osu!mania(3)" : "未知(" + line.split(":")[1] + ")\n");
+											else if (line.startsWith("Mode:")) description[1] = "模式：" + (Integer.parseInt(line.split(":")[1].trim()) == 3 ? "osu!mania(3)\n" : "未知(" + line.split(":")[1] + ")\n");
 											else if (line.startsWith("Version:")) description[2] = "难度：" + line.substring(line.indexOf(":") + 1).trim() + "\n";
 											else if (line.startsWith("Creator:")) description[3] = "谱师：" + line.substring(line.indexOf(":") + 1).trim();
 										}
@@ -184,27 +184,28 @@ public class LoadFromMalodyActivity extends AppCompatActivity {
 	public void catcher(final Exception e) {
 		final StringWriter sw = new StringWriter();
 		e.printStackTrace(new PrintWriter(sw, true));
-		AlertDialog.Builder adb = new AlertDialog.Builder(this);
-		adb.setIcon(android.R.drawable.ic_delete);
-		adb.setTitle(R.string.crash_title);
-		adb.setMessage(sw.toString());
-		adb.setPositiveButton(R.string.crash_ok, new DialogInterface.OnClickListener(){
+		runOnUiThread(new Runnable() {
 				@Override
-				public void onClick(DialogInterface p1, int p2) {
-					ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-					ClipData cd = ClipData.newPlainText("Error message from MalodyVersusPhigros by DingZiHu", sw.toString());
-					cm.setPrimaryClip(cd);
-					finish();
+				public void run() {
+					AlertDialog.Builder adb = new AlertDialog.Builder(LoadFromMalodyActivity.this);
+					adb.setIcon(android.R.drawable.ic_delete).setTitle(R.string.crash_title).setMessage(sw.toString()).setPositiveButton(R.string.crash_ok, new DialogInterface.OnClickListener(){
+							@Override
+							public void onClick(DialogInterface p1, int p2) {
+								ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+								ClipData cd = ClipData.newPlainText("Error message from MalodyVersusPhigros by DingZiHu", sw.toString());
+								cm.setPrimaryClip(cd);
+								finish();
+							}
+						}
+					).setNegativeButton(R.string.crash_cancel, new DialogInterface.OnClickListener(){
+							@Override
+							public void onClick(DialogInterface p1, int p2) {
+								finish();
+							}
+						}
+					).setCancelable(false).show();
 				}
 			}
 		);
-		adb.setNegativeButton(R.string.crash_cancel, new DialogInterface.OnClickListener(){
-				@Override
-				public void onClick(DialogInterface p1, int p2) {
-					finish();
-				}
-			}
-		);
-		adb.setCancelable(false).show();
 	}
 }

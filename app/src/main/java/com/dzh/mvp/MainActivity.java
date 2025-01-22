@@ -9,6 +9,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.InputType;
 import android.view.Menu;
@@ -30,6 +31,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
+import androidx.documentfile.provider.DocumentFile;
 import com.dzh.mvp.R;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -53,10 +55,8 @@ import java.util.zip.ZipOutputStream;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONStringer;
-import android.widget.Adapter;
 
 public class MainActivity extends AppCompatActivity {
-	public static String packageName;
 	public static Resources resources;
 	public static File settings;
 	public static File temp;
@@ -95,7 +95,7 @@ public class MainActivity extends AppCompatActivity {
 				settings.getParentFile().mkdirs();
 				settings.createNewFile();
 				BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(settings, false), "UTF-8"));
-				bw.write(new JSONStringer().object().key("default_path").value("/storage/emulated/0").key("last_path").value(false).key("delete_converted").value(false).key("bpm").value(false).key("scroll").value(false).key("wide").value(false).key("slide").value(0).key("guide").value(false).key("interval").value("0:1/12").key("random_falling").value(false).key("luck").value(false).key("default_speed").value(10.0).key("default_position").value(-278.1).endObject().toString());
+				bw.write(new JSONStringer().object().key("system_file_selector").value(false).key("default_path").value("/storage/emulated/0").key("last_path").value(false).key("delete_converted").value(false).key("bpm").value(false).key("scroll").value(false).key("wide").value(false).key("slide").value(0).key("guide").value(false).key("interval").value("0:1/12").key("random_falling").value(false).key("luck").value(false).key("default_speed").value(10d).key("default_position").value(-278.1).endObject().toString());
 				bw.close();
 			}
 			if (!temp.exists()) temp.mkdirs();
@@ -103,6 +103,7 @@ public class MainActivity extends AppCompatActivity {
 			BufferedReader setbr = new BufferedReader(new InputStreamReader(new FileInputStream(settings), "UTF-8"));
 			jo = new JSONObject(setbr.readLine());
 			setbr.close();
+			jo.put("system_file_selector", jo.has("system_file_selector") ? jo.getBoolean("system_file_selector") : false).put("default_path", jo.has("default_path") ? jo.getString("default_path") : "/storage/emulated/0").put("last_path", jo.has("last_path") ? jo.getBoolean("last_path") : false).put("delete_converted", jo.has("delete_converted") ? jo.getBoolean("delete_converted") : false).put("bpm", jo.has("bpm") ? jo.getBoolean("bpm") : false).put("scroll", jo.has("scroll") ? jo.getBoolean("scroll") : false).put("wide", jo.has("wide") ? jo.getBoolean("wide") : false).put("slide", jo.has("slide") ? jo.getInt("slide") : 0).put("guide", jo.has("guide") ? jo.getBoolean("guide") : false).put("interval", jo.has("interval") ? jo.getString("interval") : "0:1/12").put("random_falling", jo.has("random_falling") ? jo.getBoolean("random_falling") : false).put("luck", jo.has("luck") ? jo.getBoolean("luck") : false).put("default_speed", jo.has("default_speed") ? jo.getDouble("default_speed") : 10d).put("default_position", jo.has("default_position") ? jo.getDouble("default_position") : -278.1);
 			loadChart.setOnClickListener(new View.OnClickListener() {
 					@Override
 					public void onClick(View p1) {
@@ -116,9 +117,8 @@ public class MainActivity extends AppCompatActivity {
 												startActivityForResult(new Intent(MainActivity.this, LoadFromMalodyActivity.class), 1);
 												break;
 											case 1:
-												Intent i = new Intent(MainActivity.this, FileSelectorActivity.class);
-												i.putExtra("path", jo.getString("default_path"));
-												startActivityForResult(i, 2);
+												if (jo.getBoolean("system_file_selector")) startActivityForResult(new Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("*/*"), 321);
+												else startActivityForResult(new Intent(MainActivity.this, FileSelectorActivity.class).putExtra("path", jo.getString("default_path")), 2);
 												break;
 										}
 									} catch (Exception e) {
@@ -459,11 +459,11 @@ public class MainActivity extends AppCompatActivity {
 						while ((line = br.readLine()) != null) {
 							if (line.startsWith("Title:")) prop[0] = line.substring(line.indexOf(":") + 1).trim() + "\n";
 							else if (line.startsWith("Artist:")) prop[1] = "曲师：" + line.substring(line.indexOf(":") + 1).trim() + "\n";
-							else if (line.startsWith("Mode:")) prop[2] = "模式：" + (Integer.parseInt(line.split(":")[1]) == 3 ? "osu!mania(3)" : "未知(" + line.split(":")[1] + ")\n");
+							else if (line.startsWith("Mode:")) prop[2] = "模式：" + (Integer.parseInt(line.split(":")[1].trim()) == 3 ? "osu!mania(3)\n" : "未知(" + line.split(":")[1] + ")\n");
 							else if (line.startsWith("Version:")) prop[3] = "难度：" + line.substring(line.indexOf(":") + 1).trim() + "\n";
 							else if (line.startsWith("Creator:")) prop[4] = "谱师：" + line.substring(line.indexOf(":") + 1).trim();
 						}
-					properties = "osu!谱面\n" + prop[0] + prop[1] + prop[2] + prop[3] + prop[4];
+					properties = "osu!谱面\n曲名：" + prop[0] + prop[1] + prop[2] + prop[3] + prop[4];
 					br.close();
 				} else if (file.getName().toLowerCase().endsWith(".json") || file.getName().endsWith(".pec")) properties = "Phigros谱面";
 				else if (file.getName().toLowerCase().endsWith(".mvp")) properties = "MalodyVersusPhigros脚本文件";
@@ -485,10 +485,9 @@ public class MainActivity extends AppCompatActivity {
 		setContentView(R.layout.activity_main);
 		Toolbar toolbar = findViewById(R.id.toolbar);
 		setSupportActionBar(toolbar);
-		packageName = getPackageName();
 		resources = getResources();
-		settings = new File("/data/data/" + getPackageName() + "/files/settings.json");
-		temp = new File("/data/data/" + getPackageName() + "/cache");
+		settings = new File(getFilesDir().getAbsolutePath() + File.separator + "settings.json");
+		temp = getCacheDir();
 		if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) ActivityCompat.requestPermissions(this, new String[]{ Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE }, 114);
 		if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) init();
 	}
@@ -499,28 +498,29 @@ public class MainActivity extends AppCompatActivity {
 		}
 		final StringWriter sw = new StringWriter();
 		e.printStackTrace(new PrintWriter(sw, true));
-		AlertDialog.Builder adb = new AlertDialog.Builder(this);
-		adb.setIcon(android.R.drawable.ic_delete);
-		adb.setTitle(R.string.crash_title);
-		adb.setMessage(sw.toString());
-		adb.setPositiveButton(R.string.crash_ok, new DialogInterface.OnClickListener(){
+		runOnUiThread(new Runnable() {
 				@Override
-				public void onClick(DialogInterface p1, int p2) {
-					ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-					ClipData cd = ClipData.newPlainText("Error message from MalodyVersusPhigros by DingZiHu", sw.toString());
-					cm.setPrimaryClip(cd);
-					finish();
+				public void run() {
+					AlertDialog.Builder adb = new AlertDialog.Builder(MainActivity.this);
+					adb.setIcon(android.R.drawable.ic_delete).setTitle(R.string.crash_title).setMessage(sw.toString()).setPositiveButton(R.string.crash_ok, new DialogInterface.OnClickListener(){
+							@Override
+							public void onClick(DialogInterface p1, int p2) {
+								ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+								ClipData cd = ClipData.newPlainText("Error message from MalodyVersusPhigros by DingZiHu", sw.toString());
+								cm.setPrimaryClip(cd);
+								finish();
+							}
+						}
+					).setNegativeButton(R.string.crash_cancel, new DialogInterface.OnClickListener(){
+							@Override
+							public void onClick(DialogInterface p1, int p2) {
+								finish();
+							}
+						}
+					).setCancelable(false).show();
 				}
 			}
 		);
-		adb.setNegativeButton(R.string.crash_cancel, new DialogInterface.OnClickListener(){
-				@Override
-				public void onClick(DialogInterface p1, int p2) {
-					finish();
-				}
-			}
-		);
-		adb.setCancelable(false).show();
 	}
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
@@ -558,11 +558,11 @@ public class MainActivity extends AppCompatActivity {
 					Toast.makeText(this, "已清空已加载谱面！", Toast.LENGTH_SHORT).show();
 					return true;
 				case R.id.settings:
-					startActivityForResult(new Intent(this, SettingsActivity.class), 3);
+					startActivityForResult(new Intent(this, SettingsActivity.class).putExtra("jo", jo.toString()), 3);
 					return true;
 				case R.id.about:
 					AlertDialog.Builder adb = new AlertDialog.Builder(this);
-					adb.setIcon(R.drawable.ic_launcher).setTitle(R.string.app_name).setMessage("MalodyVersusPhigros v1.5.6 by 起名钉子户\n想催更？给我的视频投114514颗币就可以啦！（被打）\n如果你想向我报告一些bug的话，请立即联系我！！！\n（因为晚一点可能就被其他人抢走了😂）");
+					adb.setIcon(R.drawable.ic_launcher).setTitle(R.string.app_name).setMessage("MalodyVersusPhigros v" + Build.VERSION.RELEASE + " by 起名钉子户\n想催更？给我的视频投114514颗币就可以啦！（被打）\n如果你想向我报告一些bug的话，请立即联系我！！！\n（因为晚一点可能就被其他人抢走了😂）");
 					adb.setPositiveButton(R.string.about_ok, null).show();
 					return true;
 				case R.id.update_log:
@@ -591,8 +591,12 @@ public class MainActivity extends AppCompatActivity {
 						new Thread(new Runnable() {
 								@Override
 								public void run() {
-									for (String file : files) copy(new File(file), temp.getAbsolutePath() + File.separator + file.substring(file.lastIndexOf("/") + 1));
-									refreshChartList();
+									try {
+										for (String file : files) copy(new File(file), temp.getAbsolutePath() + File.separator + file.substring(file.lastIndexOf("/") + 1));
+										refreshChartList();
+									} catch (Exception e) {
+										catcher(e);
+									}
 									loading.cancel();
 									runOnUiThread(new Runnable() {
 											@Override
@@ -643,6 +647,51 @@ public class MainActivity extends AppCompatActivity {
 					case 3:
 						jo = new JSONObject(data.getStringExtra("jo"));
 						break;
+					case 321:
+						new Thread(new Runnable() {
+								@Override
+								public void run() {
+									try {
+										String name = DocumentFile.fromSingleUri(MainActivity.this, data.getData()).getName();
+										if (!(name.toLowerCase().endsWith(".mcz") || name.toLowerCase().endsWith(".zip") || name.toLowerCase().endsWith(".pez"))) {
+											Toast.makeText(MainActivity.this, "文件格式不正确！", Toast.LENGTH_SHORT).show();
+											return;
+										}
+										ZipInputStream zis = new ZipInputStream(getContentResolver().openInputStream(data.getData()));
+										ZipEntry ze = zis.getNextEntry();
+										byte[] buffer = new byte[1024 * 1024];
+										int count = 0;
+										while (ze != null) {
+											if (!ze.isDirectory()) {
+												String fn = ze.getName();
+												fn = fn.substring(fn.lastIndexOf("/") + 1);
+												File file = new File(temp.getAbsolutePath() + File.separator + fn);
+												file.createNewFile();
+												FileOutputStream fos = new FileOutputStream(file);
+												while ((count = zis.read(buffer)) > 0) fos.write(buffer, 0, count);
+												fos.flush();
+												fos.close();
+											}
+											ze = zis.getNextEntry();
+										}
+										zis.close();
+										refreshChartList();
+										loading.cancel();
+										runOnUiThread(new Runnable() {
+												@Override
+												public void run() {
+													Toast.makeText(MainActivity.this, "谱面加载完成！", Toast.LENGTH_SHORT).show();
+												}
+											}
+										);
+									} catch (Exception e) {
+										catcher(e);
+									}
+								}
+							}
+						).start();
+						loading.show();
+						break;
 				}
 				BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(settings, false), "UTF-8"));
 				bw.write(jo.toString());
@@ -687,7 +736,7 @@ public class MainActivity extends AppCompatActivity {
 		for (int i : grantResults) if (i == PackageManager.PERMISSION_GRANTED) result++;
 		if (result != permissions.length) {
 			Toast.makeText(this, "获取权限失败。请前往手机设置授予。", Toast.LENGTH_LONG).show();
-			finishAndRemoveTask();
+			finish();
 		}
 	}
 	public void copy(File source, String dest) {
@@ -702,14 +751,8 @@ public class MainActivity extends AppCompatActivity {
 			is.close();
 			os.flush();
 			os.close();
-		} catch (final Exception e) {
-			runOnUiThread(new Runnable() {
-					@Override
-					public void run() {
-						catcher(e);
-					}
-				}
-			);
+		} catch (Exception e) {
+			catcher(e);
 		}
 	}
 	public void doZip(String srcPath, String targetPath) {
