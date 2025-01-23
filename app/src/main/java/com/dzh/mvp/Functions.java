@@ -178,7 +178,7 @@ public class Functions {
 						if (mode == 0){
 							type = mode_ext.getInt("column") + "K";
 							Fraction[] occupy = new Fraction[mode_ext.getInt("column")];
-							for (int j = 0; j < occupy.length - 1; j++) occupy[j] = new Fraction(-1, 0, 1);
+							for (int j = 0; j < occupy.length; j++) occupy[j] = new Fraction(-1, 0, 1);
 							for (int j = 0; j < note.length(); j++) {
 								JSONObject jo = note.getJSONObject(j);
 								if (jo.has("sound")) music = new File(MainActivity.temp.getPath() + File.separator + jo.getString("sound"));
@@ -187,13 +187,12 @@ public class Functions {
 									Fraction startTime = new Fraction(jo.getJSONArray("beat"));
 									int track = jo.getInt("column");
 									if (luck) {
-										track = Random.nextInt(0, jo.getInt("column") - 1);
 										while (true) {
+											track = Random.nextInt(0, occupy.length - 1);
 											if (startTime.gt(occupy[track])) {
 												occupy[track] = endTime;
 												break;
 											}
-											track = Random.nextInt(0, jo.getInt("column") - 1);
 										}
 									}
 									double positionX = 1350.0 / Double.valueOf(mode_ext.getInt("column") + 1) * Double.valueOf(track + 1) - 675.0;
@@ -202,13 +201,12 @@ public class Functions {
 									Fraction startTime = new Fraction(jo.getJSONArray("beat"));
 									int track = jo.getInt("column");
 									if (luck) {
-										track = Random.nextInt(0, jo.getInt("column") - 1);
 										while (true) {
+											track = Random.nextInt(0, occupy.length - 1);
 											if (startTime.gt(occupy[track])) {
 												occupy[track] = startTime;
 												break;
 											}
-											track = Random.nextInt(0, jo.getInt("column") - 1);
 										}
 									}
 									double positionX = 1350.0 / Double.valueOf(mode_ext.getInt("column") + 1) * Double.valueOf(track + 1) - 675.0;
@@ -305,12 +303,11 @@ public class Functions {
 											int moveX = 0;
 											if (seg.getJSONObject(k).has("x")) moveX = seg.getJSONObject(k).getInt("x");
 											Fraction segf = new Fraction(seg.getJSONObject(k).getJSONArray("beat"));
-											segf.add(startTime);
-											Fraction move = startTime.add(segf);
+											Fraction move = startTime.clone().add(segf);
 											double movePositionX = moveX / 128d * 675d;
 											if (slide == 1 || (slide == 2 && guide)) {
 												double v = (movePositionX - lastPositionX) / (move.clone().subtract(last).toBigDecimal().doubleValue());
-												while (current.add(interval).gt(move)){
+												while (!current.clone().add(interval).gt(move)) {
 													current.add(interval);
 													lines.get(0).addNote(falling, slide == 1 ? 255 : 128, current.toString(), slide == 1 ? 0 : 1, positionX + lastPositionX + v * current.clone().subtract(last).toBigDecimal().doubleValue(), wide ? size : 1d, 1d, current.toString(), 4, 0d);
 												}
