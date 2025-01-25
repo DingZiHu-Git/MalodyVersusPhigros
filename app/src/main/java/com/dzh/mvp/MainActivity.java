@@ -9,7 +9,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
-import android.os.Build;
 import android.os.Bundle;
 import android.text.InputType;
 import android.view.Menu;
@@ -21,11 +20,14 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ScrollView;
 import android.widget.SimpleAdapter;
 import android.widget.Spinner;
+import android.widget.SpinnerAdapter;
 import android.widget.Switch;
+import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -85,17 +87,19 @@ public class MainActivity extends AppCompatActivity {
 			final Spinner slide = findViewById(R.id.slide);
 			final Switch guide = findViewById(R.id.guide);
 			final EditText guideInterval = findViewById(R.id.guide_interval);
+			final EditText defaultWide = findViewById(R.id.default_wide);
 			final Switch randomFalling = findViewById(R.id.random_falling);
 			final Switch luck = findViewById(R.id.luck);
 			final EditText speed = findViewById(R.id.speed);
 			final EditText position = findViewById(R.id.position);
 			final EditText illustrator = findViewById(R.id.illustrator);
 			Button speedTool = findViewById(R.id.speed_tool);
+			Button typeTool = findViewById(R.id.type_tool);
 			if (!settings.exists()) {
 				settings.getParentFile().mkdirs();
 				settings.createNewFile();
 				BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(settings, false), "UTF-8"));
-				bw.write(new JSONStringer().object().key("system_file_selector").value(false).key("default_path").value("/storage/emulated/0").key("last_path").value(false).key("delete_converted").value(false).key("bpm").value(false).key("scroll").value(false).key("wide").value(false).key("slide").value(0).key("guide").value(false).key("interval").value("0:1/12").key("random_falling").value(false).key("luck").value(false).key("default_speed").value(10d).key("default_position").value(-278.1).endObject().toString());
+				bw.write(new JSONStringer().object().key("system_file_selector").value(false).key("default_path").value("/storage/emulated/0").key("last_path").value(false).key("delete_converted").value(false).key("bpm").value(false).key("scroll").value(false).key("wide").value(false).key("slide").value(0).key("guide").value(false).key("interval").value("0:1/12").key("default_wide").value(51).key("random_falling").value(false).key("luck").value(false).key("default_speed").value(10d).key("default_position").value(-278.1).endObject().toString());
 				bw.close();
 			}
 			if (!temp.exists()) temp.mkdirs();
@@ -104,7 +108,7 @@ public class MainActivity extends AppCompatActivity {
 			JSONObject setjo = new JSONObject(setbr.readLine());
 			setbr.close();
 			jo = new JSONObject();
-			jo.put("system_file_selector", setjo.has("system_file_selector") ? setjo.getBoolean("system_file_selector") : false).put("default_path", setjo.has("default_path") ? setjo.getString("default_path") : "/storage/emulated/0").put("last_path", setjo.has("last_path") ? setjo.getBoolean("last_path") : false).put("delete_converted", setjo.has("delete_converted") ? setjo.getBoolean("delete_converted") : false).put("bpm", setjo.has("bpm") ? setjo.getBoolean("bpm") : false).put("scroll", setjo.has("scroll") ? setjo.getBoolean("scroll") : false).put("wide", setjo.has("wide") ? setjo.getBoolean("wide") : false).put("slide", setjo.has("slide") ? setjo.getInt("slide") : 0).put("guide", setjo.has("guide") ? setjo.getBoolean("guide") : false).put("interval", setjo.has("interval") ? setjo.getString("interval") : "0:1/12").put("random_falling", setjo.has("random_falling") ? setjo.getBoolean("random_falling") : false).put("luck", setjo.has("luck") ? setjo.getBoolean("luck") : false).put("default_speed", setjo.has("default_speed") ? setjo.getDouble("default_speed") : 10d).put("default_position", setjo.has("default_position") ? setjo.getDouble("default_position") : -278.1);
+			jo.put("system_file_selector", setjo.has("system_file_selector") ? setjo.getBoolean("system_file_selector") : false).put("default_path", setjo.has("default_path") ? setjo.getString("default_path") : "/storage/emulated/0").put("last_path", setjo.has("last_path") ? setjo.getBoolean("last_path") : false).put("delete_converted", setjo.has("delete_converted") ? setjo.getBoolean("delete_converted") : false).put("bpm", setjo.has("bpm") ? setjo.getBoolean("bpm") : false).put("scroll", setjo.has("scroll") ? setjo.getBoolean("scroll") : false).put("wide", setjo.has("wide") ? setjo.getBoolean("wide") : false).put("slide", setjo.has("slide") ? setjo.getInt("slide") : 0).put("guide", setjo.has("guide") ? setjo.getBoolean("guide") : false).put("interval", setjo.has("interval") ? setjo.getString("interval") : "0:1/12").put("default_wide", setjo.has("default_wide") ? setjo.getInt("default_wide") : 51).put("random_falling", setjo.has("random_falling") ? setjo.getBoolean("random_falling") : false).put("luck", setjo.has("luck") ? setjo.getBoolean("luck") : false).put("default_speed", setjo.has("default_speed") ? setjo.getDouble("default_speed") : 10d).put("default_position", setjo.has("default_position") ? setjo.getDouble("default_position") : -278.1);
 			loadChart.setOnClickListener(new View.OnClickListener() {
 					@Override
 					public void onClick(View p1) {
@@ -187,7 +191,7 @@ public class MainActivity extends AppCompatActivity {
 									sv.removeAllViews();
 								}
 							}
-						).show();
+						).setCancelable(false).show();
 					}
 				}
 			);
@@ -200,6 +204,7 @@ public class MainActivity extends AppCompatActivity {
 						final int slideValue = slide.getSelectedItemPosition();
 						final boolean isGuide = guide.isChecked();
 						final String interval = guideInterval.getText().toString();
+						final int wideValue = Integer.parseInt(defaultWide.getText().toString());
 						final boolean randomFallingValue = randomFalling.isChecked();
 						final boolean luckValue = luck.isChecked();
 						final double speedValue = Double.valueOf(speed.getText().toString());
@@ -210,12 +215,12 @@ public class MainActivity extends AppCompatActivity {
 							new Thread(new Runnable(){
 									@Override
 									public void run() {
-										crash = functions.convert(false, isBPM, isScroll, isWide, slideValue, isGuide, interval, randomFallingValue, luckValue, speedValue, positionValue, illustratorValue);
+										crash = functions.convert(false, isBPM, isScroll, isWide, slideValue, isGuide, interval, wideValue, randomFallingValue, luckValue, speedValue, positionValue, illustratorValue);
 										loading.cancel();
 										runOnUiThread(new Runnable(){
 												@Override
 												public void run() {
-													if (crash == null) Toast.makeText(MainActivity.this, "谱面转换完成！请到/storage/emulated/0/data/MVP寻找您的谱面！", Toast.LENGTH_LONG).show();
+													if (crash == null) Toast.makeText(MainActivity.this, "谱面转换完成！请到" + dir.getAbsolutePath() + "寻找您的谱面！", Toast.LENGTH_LONG).show();
 													else if (crash.isEmpty()) Toast.makeText(MainActivity.this, "?🤔🤔!", Toast.LENGTH_SHORT).show();
 													else {
 														try {
@@ -244,6 +249,7 @@ public class MainActivity extends AppCompatActivity {
 						final int slideValue = slide.getSelectedItemPosition();
 						final boolean isGuide = guide.isChecked();
 						final String interval = guideInterval.getText().toString();
+						final int wideValue = Integer.parseInt(defaultWide.getText().toString());
 						final boolean randomFallingValue = randomFalling.isChecked();
 						final boolean luckValue = luck.isChecked();
 						final double speedValue = Double.valueOf(speed.getText().toString());
@@ -254,12 +260,12 @@ public class MainActivity extends AppCompatActivity {
 							new Thread(new Runnable(){
 									@Override
 									public void run() {
-										crash = functions.convert(true, isBPM, isScroll, isWide, slideValue, isGuide, interval, randomFallingValue, luckValue, speedValue, positionValue, illustratorValue);
+										crash = functions.convert(true, isBPM, isScroll, isWide, slideValue, isGuide, interval, wideValue, randomFallingValue, luckValue, speedValue, positionValue, illustratorValue);
 										loading.cancel();
 										runOnUiThread(new Runnable(){
 												@Override
 												public void run() {
-													if (crash == null) Toast.makeText(MainActivity.this, "谱面转换完成！请到/storage/emulated/0/data/MVP寻找您的谱面！", Toast.LENGTH_LONG).show();
+													if (crash == null) Toast.makeText(MainActivity.this, "谱面转换完成！请到" + dir.getAbsolutePath() + "寻找您的谱面！", Toast.LENGTH_LONG).show();
 													else if (crash.isEmpty()) Toast.makeText(MainActivity.this, "?🤔🤔!", Toast.LENGTH_SHORT).show();
 													else {
 														try {
@@ -331,6 +337,7 @@ public class MainActivity extends AppCompatActivity {
 				}
 			);
 			guideInterval.setText(jo.getString("interval"));
+			defaultWide.setText(String.valueOf(jo.getInt("default_wide")));
 			randomFalling.setChecked(jo.getBoolean("random_falling"));
 			luck.setChecked(jo.getBoolean("luck"));
 			speed.setText(String.valueOf(jo.getDouble("default_speed")));
@@ -342,71 +349,172 @@ public class MainActivity extends AppCompatActivity {
 						else {
 							AlertDialog.Builder adb = new AlertDialog.Builder(MainActivity.this);
 							final EditText et = new EditText(MainActivity.this);
-							et.setInputType(InputType.TYPE_CLASS_NUMBER);
+							et.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
 							et.setText("1.0");
-							adb.setTitle("谱面流速工具 v1.0").setMessage("请输入谱面流速更改的倍率（例如输入2.0会使谱面流速变为原来的2倍）：").setView(et).setPositiveButton(R.string.ok, new DialogInterface.OnClickListener(){
+							adb.setTitle("谱面流速工具 v1.1").setMessage("请输入谱面流速更改的倍率（例如输入2.0会使谱面流速变为原来的2倍）：").setView(et).setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
 									@Override
 									public void onClick(DialogInterface dialog, int which) {
-										try {
-											for (Map<String, Object> m : chartList) {
-												Switch s = (Switch) m.get("name");
-												if (s.isChecked() && s.getText().toString().endsWith(".json")) {
-													File f = new File(temp.getAbsolutePath() + File.separator + s.getText().toString());
-													BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(f), "UTF-8"));
-													String json = "";
-													String line = null;
-													while ((line = reader.readLine()) != null) json += line;
-													JSONObject main = new JSONObject(json);
-													JSONStringer js = new JSONStringer();
-													if (main.has("formatVersion") && main.getInt("formatVersion") == 3) {
-														js.object().key("formatVersion").value(3).key("offset").value(main.getDouble("offset")).key("judgeLineList").array();
-														JSONArray lineList = main.getJSONArray("judgeLineList");
-														for (int i = 0; i < lineList.length(); i++) {
-															JSONObject obj = lineList.getJSONObject(i);
-															js.object().key("bpm").value(obj.getDouble("bpm"));
-															JSONArray notesAbove = obj.getJSONArray("notesAbove");
-															JSONArray notesBelow = obj.getJSONArray("notesBelow");
-															JSONArray speedEvents = obj.getJSONArray("speedEvents");
-															JSONArray moveEvents = obj.getJSONArray("judgeLineMoveEvents");
-															JSONArray rotateEvents = obj.getJSONArray("judgeLineRotateEvents");
-															JSONArray disappearEvents = obj.getJSONArray("judgeLineDisappearEvents");
-															js.key("notesAbove").array();
-															for (int j = 0; j < notesAbove.length(); j++) {
-																JSONObject note = notesAbove.getJSONObject(j);
-																if (note.getInt("type") == 3) js.object().key("type").value(3).key("time").value(note.getInt("time")).key("positionX").value(note.getDouble("positionX")).key("holdTime").value(note.getDouble("holdTime")).key("speed").value(note.getDouble("speed") * Double.valueOf(et.getText().toString())).key("floorPosition").value(note.getDouble("floorPosition") * Double.valueOf(et.getText().toString())).endObject();
-																else js.object().key("type").value(note.getInt("type")).key("time").value(note.getInt("time")).key("positionX").value(note.getDouble("positionX")).key("holdTime").value(0.0).key("speed").value(note.getDouble("speed")).key("floorPosition").value(note.getDouble("floorPosition") * Double.valueOf(et.getText().toString())).endObject();
+										new Thread(new Runnable() {
+												@Override
+												public void run() {
+													try {
+														for (Map<String, Object> m : chartList) {
+															boolean checked = m.get("checked");
+															if (checked && ((String) m.get("name")).toLowerCase().endsWith(".json")) {
+																File f = new File(temp.getAbsolutePath() + File.separator + m.get("name"));
+																BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(f), "UTF-8"));
+																String json = "";
+																String line = null;
+																while ((line = reader.readLine()) != null) json += line;
+																JSONObject main = new JSONObject(json);
+																if (main.has("formatVersion")) {
+																	JSONArray lineList = main.getJSONArray("judgeLineList");
+																	for (int i = 0; i < lineList.length(); i++) {
+																		JSONObject obj = lineList.getJSONObject(i);
+																		JSONArray notesAbove = obj.getJSONArray("notesAbove");
+																		JSONArray notesBelow = obj.getJSONArray("notesBelow");
+																		JSONArray speedEvents = obj.getJSONArray("speedEvents");
+																		for (int j = 0; j < notesAbove.length(); j++) {
+																			JSONObject note = notesAbove.getJSONObject(j);
+																			notesAbove.put(note.getInt("type") == 3 ? note.put("speed", note.getDouble("speed") * Double.valueOf(et.getText().toString())).put("floorPosition", note.getDouble("floorPosition") * Double.valueOf(et.getText().toString())) : note.put("floorPosition", note.getDouble("floorPosition") * Double.valueOf(et.getText().toString())));
+																		}
+																		obj.put("notesAbove", notesAbove);
+																		for (int j = 0; j < notesBelow.length(); j++) {
+																			JSONObject note = notesBelow.getJSONObject(j);
+																			notesAbove.put(note.getInt("type") == 3 ? note.put("speed", note.getDouble("speed") * Double.valueOf(et.getText().toString())).put("floorPosition", note.getDouble("floorPosition") * Double.valueOf(et.getText().toString())) : note.put("floorPosition", note.getDouble("floorPosition") * Double.valueOf(et.getText().toString())));
+																		}
+																		obj.put("notesBelow", notesBelow);
+																		for (int j = 0; j < speedEvents.length(); j++) speedEvents.put(j, speedEvents.getJSONObject(j).put("value", speedEvents.getJSONObject(j).getDouble("value") * Double.valueOf(et.getText().toString())));
+																		main.getJSONArray("judgeLineList").put(i, obj.put("speedEvents", speedEvents));
+																	}
+																} else if (main.has("META") && main.getJSONObject("META").has("RPEVersion")) {
+																	JSONArray judgeLineList = main.getJSONArray("judgeLineList");
+																	for (int i = 0; i < judgeLineList.length() - 1; i++) {
+																		JSONArray eventLayers = judgeLineList.getJSONObject(i).getJSONArray("eventLayers");
+																		for (int j = 0; j < eventLayers.length() - 1; j++) {
+																			JSONArray speedEvents = eventLayers.getJSONObject(j).getJSONArray("speedEvents");
+																			for (int k = 0; k < speedEvents.length() - 1; k++) speedEvents.put(k, speedEvents.getJSONObject(k).put("end", speedEvents.getJSONObject(k).getDouble("end") * Double.parseDouble(et.getText().toString())).put("start", speedEvents.getJSONObject(k).getDouble("start") * Double.parseDouble(et.getText().toString())));
+																			eventLayers.put(j, eventLayers.getJSONObject(j).put("speedEvents", speedEvents));
+																		}
+																		judgeLineList.put(i, judgeLineList.getJSONObject(i).put("eventLayers", eventLayers));
+																	}
+																	main.put("judgeLineList", judgeLineList);
+																}
+																BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(f, false), "UTF-8"));
+																writer.write(main.toString());
+																writer.close();
+																doZip(temp.getAbsolutePath(), dir.getAbsolutePath() + File.separator + f.getName() + ".pez");
 															}
-															js.endArray().key("notesBelow").array();
-															for (int j = 0; j < notesBelow.length(); j++) {
-																JSONObject note = notesBelow.getJSONObject(j);
-																if (note.getInt("type") == 3) js.object().key("type").value(3).key("time").value(note.getInt("time")).key("positionX").value(note.getDouble("positionX")).key("holdTime").value(note.getDouble("holdTime")).key("speed").value(note.getDouble("speed") * Double.valueOf(et.getText().toString())).key("floorPosition").value(note.getDouble("floorPosition") * Double.valueOf(et.getText().toString())).endObject();
-																else js.object().key("type").value(note.getInt("type")).key("time").value(note.getInt("time")).key("positionX").value(note.getDouble("positionX")).key("holdTime").value(0.0).key("speed").value(note.getDouble("speed")).key("floorPosition").value(note.getDouble("floorPosition") * Double.valueOf(et.getText().toString())).endObject();
-															}
-															js.endArray().key("speedEvents").array();
-															for (int j = 0; j < speedEvents.length(); j++) js.object().key("startTime").value(speedEvents.getJSONObject(j).getDouble("startTime")).key("endTime").value(speedEvents.getJSONObject(j).getDouble("endTime")).key("value").value(speedEvents.getJSONObject(j).getDouble("value") * Double.valueOf(et.getText().toString())).endObject();
-															js.endArray().key("judgeLineMoveEvents").array();
-															for (int j = 0; j < moveEvents.length(); j++) js.object().key("startTime").value(moveEvents.getJSONObject(j).getDouble("startTime")).key("endTime").value(moveEvents.getJSONObject(j).getDouble("endTime")).key("start").value(moveEvents.getJSONObject(j).getDouble("start")).key("end").value(moveEvents.getJSONObject(j).getDouble("end")).key("start2").value(moveEvents.getJSONObject(j).getDouble("start2")).key("end2").value(moveEvents.getJSONObject(j).getDouble("end2")).endObject();
-															js.endArray().key("judgeLineRotateEvents").array();
-															for (int j = 0; j < rotateEvents.length(); j++) js.object().key("startTime").value(rotateEvents.getJSONObject(j).getDouble("startTime")).key("endTime").value(rotateEvents.getJSONObject(j).getDouble("endTime")).key("start").value(rotateEvents.getJSONObject(j).getDouble("start")).key("end").value(rotateEvents.getJSONObject(j).getDouble("end")).endObject();
-															js.endArray().key("judgeLineDisappearEvents").array();
-															for (int j = 0; j < disappearEvents.length(); j++) js.object().key("startTime").value(disappearEvents.getJSONObject(j).getDouble("startTime")).key("endTime").value(disappearEvents.getJSONObject(j).getDouble("endTime")).key("start").value(disappearEvents.getJSONObject(j).getDouble("start")).key("end").value(disappearEvents.getJSONObject(j).getDouble("end")).endObject();
-															js.endArray().endObject();
 														}
-														js.endArray().endObject();
-													} else if (main.has("META") && main.getJSONObject("META").has("RPEVersion")) {}
-													BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(f, false), "UTF-8"));
-													writer.write(js.toString());
-													writer.close();
-													doZip(temp.getAbsolutePath(), dir.getAbsolutePath() + File.separator + f.getName() + ".pez");
+														loading.cancel();
+														runOnUiThread(new Runnable() {
+																@Override
+																public void run() {
+																	Toast.makeText(MainActivity.this, "谱面修改完成！请到" + dir.getAbsolutePath() + "寻找您的谱面！", Toast.LENGTH_LONG).show();
+																}
+															}
+														);
+													} catch (Exception e) {
+														catcher(e);
+													}
 												}
 											}
-										} catch (Exception e) {
-											catcher(e);
-										}
+										, "speedTool").start();
+										loading.show();
 									}
 								}
-							).setNegativeButton(R.string.cancel, null).show();
+							).setNegativeButton(R.string.cancel, null).setCancelable(false).show();
 						}
+					}
+				}
+			);
+			typeTool.setOnClickListener(new View.OnClickListener() {
+					@Override
+					public void onClick(View v) {
+						if (chartList.isEmpty()) {
+							Toast.makeText(MainActivity.this, "请先加载一张谱面！", Toast.LENGTH_SHORT).show();
+							return;
+						}
+						LinearLayout ll = new LinearLayout(MainActivity.this);
+						LinearLayout ll1 = new LinearLayout(MainActivity.this);
+						LinearLayout ll2 = new LinearLayout(MainActivity.this);
+						LinearLayout ll3 = new LinearLayout(MainActivity.this);
+						LinearLayout ll4 = new LinearLayout(MainActivity.this);
+						TextView tv1 = new TextView(MainActivity.this);
+						TextView tv2 = new TextView(MainActivity.this);
+						TextView tv3 = new TextView(MainActivity.this);
+						TextView tv4 = new TextView(MainActivity.this);
+						final Spinner s1 = new Spinner(MainActivity.this);
+						final Spinner s2 = new Spinner(MainActivity.this);
+						final Spinner s3 = new Spinner(MainActivity.this);
+						final Spinner s4 = new Spinner(MainActivity.this);
+						final EditText et = new EditText(MainActivity.this);
+						SpinnerAdapter sa = new ArrayAdapter<String>(MainActivity.this, android.R.layout.simple_spinner_dropdown_item, new String[]{ "Tap", "Hold", "Flick", "Drag" });
+						tv1.setText("Tap→");
+						tv1.setTextSize(14);
+						tv1.setTextAppearance(android.R.style.TextAppearance_Large);
+						tv2.setText("Hold→");
+						tv2.setTextSize(14);
+						tv2.setTextAppearance(android.R.style.TextAppearance_Large);
+						tv3.setText("Flick→");
+						tv3.setTextSize(14);
+						tv3.setTextAppearance(android.R.style.TextAppearance_Large);
+						tv4.setText("Drag→");
+						tv4.setTextSize(14);
+						tv4.setTextAppearance(android.R.style.TextAppearance_Large);
+						s1.setAdapter(sa);
+						s2.setAdapter(sa);
+						s3.setAdapter(sa);
+						s4.setAdapter(sa);
+						s1.setSelection(0);
+						s2.setSelection(1);
+						s3.setSelection(2);
+						s4.setSelection(3);
+						et.setHint("音符间隔");
+						et.setEms(100);
+						ll1.setOrientation(LinearLayout.HORIZONTAL);
+						ll1.addView(tv1);
+						ll1.addView(s1);
+						ll2.setOrientation(LinearLayout.HORIZONTAL);
+						ll2.addView(tv2);
+						ll2.addView(s2);
+						ll2.addView(et);
+						ll3.setOrientation(LinearLayout.HORIZONTAL);
+						ll3.addView(tv3);
+						ll3.addView(s3);
+						ll4.setOrientation(LinearLayout.HORIZONTAL);
+						ll4.addView(tv4);
+						ll4.addView(s4);
+						ll.setOrientation(LinearLayout.VERTICAL);
+						ll.addView(ll1);
+						ll.addView(ll2);
+						ll.addView(ll3);
+						ll.addView(ll4);
+						AlertDialog.Builder adb = new AlertDialog.Builder(MainActivity.this);
+						adb.setTitle("音符类型工具").setMessage("在下方批量修改音符类型（修改为本身即为不修改）：").setView(ll).setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+								@Override
+								public void onClick(DialogInterface dialog, int which) {
+									final int tap = s1.getSelectedItemPosition();
+									final int hold = s2.getSelectedItemPosition();
+									final Fraction interval = new Fraction(et.getText().toString());
+									final int flick = s3.getSelectedItemPosition();
+									final int drag = s4.getSelectedItemPosition();
+									new Thread(new Runnable() {
+											@Override
+											public void run() {
+												try {
+													
+													loading.cancel();
+												} catch (Exception e) {
+													catcher(e);
+												}
+											}
+										}
+									, "typeTool").start();
+									loading.show();
+								}
+							}
+						).setNegativeButton(R.string.cancel, null).setCancelable(false).show();
 					}
 				}
 			);
@@ -493,10 +601,6 @@ public class MainActivity extends AppCompatActivity {
 		if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) init();
 	}
 	public void catcher(final Exception e) {
-		for (File f : temp.listFiles()) {
-			if (f.isDirectory()) for (File c : f.listFiles()) c.delete();
-			f.delete();
-		}
 		final StringWriter sw = new StringWriter();
 		e.printStackTrace(new PrintWriter(sw, true));
 		runOnUiThread(new Runnable() {
@@ -563,8 +667,7 @@ public class MainActivity extends AppCompatActivity {
 					return true;
 				case R.id.about:
 					AlertDialog.Builder adb = new AlertDialog.Builder(this);
-					adb.setIcon(R.drawable.ic_launcher).setTitle(R.string.app_name).setMessage("MalodyVersusPhigros v" + Build.VERSION.RELEASE + " by 起名钉子户\n想催更？给我的视频投114514颗币就可以啦！（被打）\n如果你想向我报告一些bug的话，请立即联系我！！！\n（因为晚一点可能就被其他人抢走了😂）");
-					adb.setPositiveButton(R.string.about_ok, null).show();
+					adb.setIcon(R.drawable.ic_launcher).setTitle(R.string.app_name).setMessage("MalodyVersusPhigros v" + getPackageManager().getPackageInfo(getPackageName(), 0).versionName + " by 起名钉子户\nGitHub开源地址：https://github.com/DingZiHu-Git/MalodyVersusPhigros\n想催更？给我的视频投114514颗币就可以啦！（被打）\n如果你想向我报告一些bug的话，请立即联系我！！！\n（因为晚一点可能就被其他人抢走了😂）").setPositiveButton(R.string.about_ok, null).show();
 					return true;
 				case R.id.update_log:
 					InputStream is = getResources().openRawResource(R.raw.update);
@@ -614,7 +717,7 @@ public class MainActivity extends AppCompatActivity {
 					case 2:
 						final String path = data.getStringExtra("path");
 						if (jo.getBoolean("last_path")) jo.put("default_path", new File(path).getParent());
-						if (!(path.toLowerCase().endsWith(".mcz") || path.toLowerCase().endsWith(".zip") || path.toLowerCase().endsWith(".pez"))) {
+						if (!(path.toLowerCase().endsWith(".mcz") || path.toLowerCase().endsWith(".zip") || path.toLowerCase().endsWith(".pez") || path.toLowerCase().endsWith(".osz"))) {
 							Toast.makeText(MainActivity.this, "文件格式不正确！", Toast.LENGTH_SHORT).show();
 							return;
 						}
@@ -654,7 +757,7 @@ public class MainActivity extends AppCompatActivity {
 								public void run() {
 									try {
 										String name = DocumentFile.fromSingleUri(MainActivity.this, data.getData()).getName();
-										if (!(name.toLowerCase().endsWith(".mcz") || name.toLowerCase().endsWith(".zip") || name.toLowerCase().endsWith(".pez"))) {
+										if (!(name.toLowerCase().endsWith(".mcz") || name.toLowerCase().endsWith(".zip") || name.toLowerCase().endsWith(".pez") || name.toLowerCase().endsWith(".osz"))) {
 											Toast.makeText(MainActivity.this, "文件格式不正确！", Toast.LENGTH_SHORT).show();
 											return;
 										}
@@ -738,7 +841,7 @@ public class MainActivity extends AppCompatActivity {
 		if (result != permissions.length) {
 			Toast.makeText(this, "获取权限失败。请前往手机设置授予。", Toast.LENGTH_LONG).show();
 			finish();
-		}
+		} else init();
 	}
 	public void copy(File source, String dest) {
 		try {

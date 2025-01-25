@@ -8,8 +8,8 @@ android {
         applicationId "com.dzh.mvp"
         minSdkVersion 16
         targetSdkVersion 29
-        versionCode 10507
-        versionName "1.5.7"
+        versionCode 10508
+        versionName "1.5.8"
     }
     buildTypes {
         release {

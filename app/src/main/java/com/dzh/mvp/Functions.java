@@ -28,7 +28,7 @@ import org.json.JSONStringer;
 
 public class Functions {
 	public File dir = new File("/storage/emulated/0/data/MVP");
-	public String convert(boolean keyToSlide, boolean bpm, boolean scroll, boolean wide, int slide, boolean guide, String guideInterval, boolean randomFalling, boolean luck, double speed, double position, String illustrator){
+	public String convert(boolean keyToSlide, boolean bpm, boolean scroll, boolean wide, int slide, boolean guide, String guideInterval, int defaultWide, boolean randomFalling, boolean luck, double speed, double position, String illustrator){
 		try {
 			final Fraction interval = new Fraction(Integer.valueOf(guideInterval.substring(0, guideInterval.indexOf(":"))), Integer.valueOf(guideInterval.substring(guideInterval.indexOf(":") + 1, guideInterval.indexOf("/"))), Integer.valueOf(guideInterval.substring(guideInterval.indexOf("/") + 1)));
 			BufferedReader setbr = new BufferedReader(new InputStreamReader(new FileInputStream(MainActivity.settings), "UTF-8"));
@@ -58,7 +58,6 @@ public class Functions {
 						JSONArray effect = main.has("effect") ? main.getJSONArray("effect") : new JSONArray();
 						if (songmeta.has("titleorg") && !songmeta.getString("titleorg").isEmpty()) name = songmeta.getString("titleorg");
 						else if (songmeta.has("title") && !songmeta.getString("title").isEmpty()) name = songmeta.getString("title");
-						String level = meta.getString("version");
 						JSONObject extra = main.has("extra") ? main.getJSONObject("extra") : null;
 						File music = null;
 						File picture = null;
@@ -99,7 +98,7 @@ public class Functions {
 						BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(output, false), "UTF-8"));
 						bw.write(jo.toString());
 						bw.close();
-						doZip(path.getAbsolutePath(), dir.getAbsolutePath() + File.separator + name.replaceAll("/", " ") + " " + column + "K_" + level.replaceAll("/", " ") + ".mcz");
+						doZip(path.getAbsolutePath(), dir.getAbsolutePath() + File.separator + file.getName() + ".mcz");
 					} else {
 						File path = new File(MainActivity.temp.getAbsolutePath() + File.separator + seed);
 						if (!path.exists()) if (!path.mkdirs()) return "Error when creating temp directory: " + path.getAbsolutePath();
@@ -285,7 +284,7 @@ public class Functions {
 									endTime.add(startTime);
 									int x = jo.getInt("x");
 									double positionX = (x - 128d) / 128d * 675d;
-									double size = wide && jo.has("w") ? jo.getDouble("w") / 51d : 1d;
+									double size = wide && jo.has("w") ? jo.getInt("w") / (double) defaultWide : 1d;
 									if (slide == 0 || (seg.length() == 1 && (!seg.getJSONObject(0).has("x") || seg.getJSONObject(0).getInt("x") == 0))) lines.get(0).addNote(randomFalling ? Random.nextInt(0, 1) : 1, 255, endTime.toString(), 0, positionX, size, 1d, startTime.toString(), 2, 0d);
 									else if (slide == 1 || slide == 2) {
 										Line hold = null;
@@ -328,7 +327,7 @@ public class Functions {
 									Fraction startTime = new Fraction(jo.getJSONArray("beat"));
 									int x = jo.getInt("x");
 									double positionX = (x - 128d) / 128d * 675d;
-									double size = wide && jo.has("w") ? jo.getDouble("w") / 51d : 1d;
+									double size = wide && jo.has("w") ? jo.getInt("w") / (double) defaultWide : 1d;
 									if (jo.has("dir")) lines.get(0).addNote(randomFalling ? Random.nextInt(0, 1) : 1, 255, startTime.toString(), 0, positionX, size, 1d, startTime.toString(), 3, 0d);
 									else lines.get(0).addNote(randomFalling ? Random.nextInt(0, 1) : 1, 255, startTime.toString(), 0, positionX, size, 1d, startTime.toString(), 4, 0d);
 								} else if (jo.has("dir")){
@@ -345,14 +344,14 @@ public class Functions {
 											flickPositionX = positionX + 100d;
 											break;
 									}
-									double size = wide && jo.has("w") ? jo.getDouble("w") / 51d : 1d;
+									double size = wide && jo.has("w") ? jo.getInt("w") / (double) defaultWide : 1d;
 									lines.get(0).addNote(falling, 255, startTime.toString(), 0, positionX, size, 1d, startTime.toString(), 1, 0d);
 									lines.get(0).addNote(falling, 255, startTime.clone().add(new Fraction(0, 1, 32)).toString(), 0, flickPositionX, size, 1d, startTime.clone().add(new Fraction(0, 1, 32)).toString(), 3, 0d);
 								} else {
 									Fraction startTime = new Fraction(jo.getJSONArray("beat"));
 									int x = jo.getInt("x");
 									double positionX = (x - 128d) / 128d * 675d;
-									double size = wide && jo.has("w") ? jo.getDouble("w") / 51d : 1d;
+									double size = wide && jo.has("w") ? jo.getInt("w") / (double) defaultWide : 1d;
 									lines.get(0).addNote(randomFalling ? Random.nextInt(0, 1) : 1, 255, startTime.toString(), 0, positionX, size, 1d, startTime.toString(), 1, 0d);
 								}
 							}
@@ -511,7 +510,7 @@ public class Functions {
 							}
 							zis.close();
 						}
-						doZip(path.getAbsolutePath(), dir.getAbsolutePath() + File.separator + name.replaceAll("/", " ") + " " + type + "_" + level.replaceAll("/", " ") + ".pez");
+						doZip(path.getAbsolutePath(), dir.getAbsolutePath() + File.separator + file.getName() + ".pez");
 					}
 				} else if (file.getName().toLowerCase().endsWith(".osu")){
 					File path = new File(MainActivity.temp.getAbsolutePath() + File.separator + String.valueOf(seed));
@@ -524,11 +523,16 @@ public class Functions {
 					String charter = null;
 					String level = null;
 					int cs = 0;
+					while ((line = br.readLine()) != null) if (line.startsWith("CircleSize")) cs = Integer.parseInt(line.split(":", 2)[1].trim());
+					br.close();
+					br = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
 					boolean mania = false;
 					boolean events = false;
 					boolean hitObjects = false;
 					JSONStringer js = new JSONStringer();
 					js.object().key("formatVersion").value(3).key("offset").value(0.0).key("judgeLineList").array().object().key("bpm").value(120.0).key("notesAbove").array();
+					int[] occupy = new int[cs];
+					for (int j = 0; j < cs - 1; j++) occupy[j] = -1;
 					while ((line = br.readLine()) != null){
 						if (line.startsWith("AudioFilename")){
 							music = new File(MainActivity.temp.getAbsolutePath() + File.separator + line.split(":", 2)[1].trim());
@@ -536,11 +540,10 @@ public class Functions {
 						}
 						if (line.startsWith("Mode") && line.split(":", 2)[1].trim().equals("3")) mania = true;
 						if (mania){
-							if (line.startsWith("TitleUnicode")) name = line.split(":", 2)[1].trim();
-							if (line.startsWith("ArtistUnicode")) composer = line.split(":", 2)[1].trim();
+							if (line.startsWith("Title")) name = line.split(":", 2)[1].trim();
+							if (line.startsWith("Artist")) composer = line.split(":", 2)[1].trim();
 							if (line.startsWith("Creator")) charter = line.split(":", 2)[1].trim();
 							if (line.startsWith("Version")) level = line.split(":", 2)[1].trim();
-							if (line.startsWith("CircleSize")) cs = Integer.valueOf(line.split(":", 2)[1].trim());
 							if (line.isEmpty()) {
 								events = false;
 								hitObjects = false;
@@ -555,8 +558,30 @@ public class Functions {
 							if (line.equals("[Events]")) events = true;
 							if (hitObjects){
 								String[] objects = line.split(",");
-								if (objects[5].split(":").length > 4) js.object().key("type").value(3).key("time").value((int) (Integer.valueOf(objects[2]) / 1000d * (120d / 1.875))).key("positionX").value(160 / 9d / (cs + 1) * ((luck ? Random.nextInt(0, cs - 1) : (Integer.valueOf(objects[0]) * cs / 512)) + 1) - 80 / 9d).key("holdTime").value((int) ((Integer.valueOf(objects[5].split(":")[0]) - Integer.valueOf(objects[2])) / 1000d * (120d / 1.875))).key("speed").value(2 / 9d * speed).key("floorPosition").value(1.875 / 120d * (Integer.valueOf(objects[2]) / 1000d * (120d / 1.875)) * (2 / 9d * speed)).endObject();
-								else js.object().key("type").value(1).key("time").value((int) (Integer.valueOf(objects[2]) / 1000d * (120d / 1.875))).key("positionX").value(160 / 9d / (cs + 1) * ((luck ? Random.nextInt(0, cs - 1) : (Integer.valueOf(objects[0]) * cs / 512)) + 1) - 80 / 9d).key("holdTime").value(0).key("speed").value(1.0).key("floorPosition").value(1.875 / 120d * (Integer.valueOf(objects[2]) / 1000d * (120d / 1.875)) * (2 / 9d * speed)).endObject();
+								int track = Integer.valueOf(objects[0]) * cs / 512;
+								if (objects[5].split(":").length > 4) {
+									if (luck) {
+										while (true) {
+											track = Random.nextInt(0, cs - 1);
+											if (Integer.parseInt(objects[2]) > occupy[track]) {
+												occupy[track] = Integer.parseInt(objects[5].split(":")[0]);
+												break;
+											}
+										}
+									}
+									js.object().key("type").value(3).key("time").value((int) (Integer.valueOf(objects[2]) / 1000d * (120d / 1.875))).key("positionX").value(160 / 9d / (cs + 1) * (track + 1) - 80 / 9d).key("holdTime").value((int) ((Integer.valueOf(objects[5].split(":")[0]) - Integer.valueOf(objects[2])) / 1000d * (120d / 1.875))).key("speed").value(2 / 9d * speed).key("floorPosition").value(1.875 / 120d * (Integer.valueOf(objects[2]) / 1000d * (120d / 1.875)) * (2 / 9d * speed)).endObject();
+								} else {
+									if (luck) {
+										while (true) {
+											track = Random.nextInt(0, cs - 1);
+											if (Integer.parseInt(objects[2]) > occupy[track]) {
+												occupy[track] = Integer.parseInt(objects[2]);
+												break;
+											}
+										}
+									}
+									js.object().key("type").value(1).key("time").value((int) (Integer.valueOf(objects[2]) / 1000d * (120d / 1.875))).key("positionX").value(160 / 9d / (cs + 1) * (track + 1) - 80 / 9d).key("holdTime").value(0d).key("speed").value(1d).key("floorPosition").value(1.875 / 120d * (Integer.valueOf(objects[2]) / 1000d * (120d / 1.875)) * (2 / 9d * speed)).endObject();
+								}
 							}
 							if (line.equals("[HitObjects]")) hitObjects = true;
 						}
@@ -596,7 +621,7 @@ public class Functions {
 						}
 						zis.close();
 					}
-					doZip(path.getAbsolutePath(), dir.getAbsolutePath() + File.separator + name.replaceAll("/", " ") + " osu_" + level.replaceAll("/", " ") + ".pez");
+					doZip(path.getAbsolutePath(), dir.getAbsolutePath() + File.separator + file.getName() + ".pez");
 				}
 			}
 			if (deleteConverted) for (File f : MainActivity.charts) f.delete();

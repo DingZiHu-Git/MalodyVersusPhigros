@@ -267,6 +267,30 @@
 
 			</LinearLayout>
 
+			<LinearLayout
+				android:orientation="horizontal"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:gravity="center">
+
+				<TextView
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:text="音符默认宽度："
+					android:textAppearance="?android:attr/textAppearanceLarge"
+					android:textSize="14sp"
+					android:paddingLeft="10dp"/>
+
+				<EditText
+					android:layout_width="match_parent"
+					android:inputType="numberSigned"
+					android:layout_height="wrap_content"
+					android:hint="Malody默认为51\nMalody V默认为47"
+					android:text="51"
+					android:id="@+id/default_wide"/>
+
+			</LinearLayout>
+
 			<View
 				android:background="?android:attr/dividerVertical"
 				android:layout_width="match_parent"
@@ -412,11 +436,24 @@
 
 			</LinearLayout>
 
-			<Button
+			<LinearLayout
+				android:orientation="horizontal"
 				android:layout_width="wrap_content"
-				android:layout_height="wrap_content"
-				android:text="谱面流速工具"
-				android:id="@+id/speed_tool"/>
+				android:layout_height="wrap_content">
+
+				<Button
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:text="谱面流速工具"
+					android:id="@+id/speed_tool"/>
+
+				<Button
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:text="音符类型工具"
+					android:id="@+id/type_tool"/>
+
+			</LinearLayout>
 
 			<View
 				android:background="?android:attr/dividerVertical"
