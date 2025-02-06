@@ -98,7 +98,7 @@ public class Functions {
 						BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(output, false), "UTF-8"));
 						bw.write(jo.toString());
 						bw.close();
-						doZip(path.getAbsolutePath(), dir.getAbsolutePath() + File.separator + file.getName() + ".mcz");
+						doZip(path.getAbsolutePath(), dir.getAbsolutePath() + File.separator + file.getName().substring(0, file.getName().lastIndexOf(".")) + ".mcz");
 					} else {
 						File path = new File(MainActivity.temp.getAbsolutePath() + File.separator + seed);
 						if (!path.exists()) if (!path.mkdirs()) return "Error when creating temp directory: " + path.getAbsolutePath();
@@ -510,7 +510,7 @@ public class Functions {
 							}
 							zis.close();
 						}
-						doZip(path.getAbsolutePath(), dir.getAbsolutePath() + File.separator + file.getName() + ".pez");
+						doZip(path.getAbsolutePath(), dir.getAbsolutePath() + File.separator + file.getName().substring(0, file.getName().lastIndexOf(".")) + ".pez");
 					}
 				} else if (file.getName().toLowerCase().endsWith(".osu")){
 					File path = new File(MainActivity.temp.getAbsolutePath() + File.separator + String.valueOf(seed));
@@ -587,7 +587,7 @@ public class Functions {
 						}
 					}
 					br.close();
-					js.endArray().key("notesBelow").array().endArray().key("speedEvents").array().object().key("startTime").value(0).key("endTime").value(100000000).key("value").value(2 / 9d * speed).endObject().endArray().key("judgeLineDisappearEvents").array().object().key("startTime").value(-999999).key("endTime").value(100000000).key("start").value(1.0).key("end").value(1.0).endObject().endArray().key("judgeLineMoveEvents").array().object().key("startTime").value(-999999).key("endTime").value(100000000).key("start").value(0.5).key("end").value(0.5).key("start2").value((position > 0 ? position : -position) / 675.0 * 0.5).key("end2").value((position > 0 ? position : -position) / 675.0 * 0.5).endObject().endArray();
+					js.endArray().key("notesBelow").array().endArray().key("speedEvents").array().object().key("startTime").value(0).key("endTime").value(100000000).key("value").value(2 / 9d * speed).endObject().endArray().key("judgeLineDisappearEvents").array().object().key("startTime").value(-999999).key("endTime").value(100000000).key("start").value(1.0).key("end").value(1.0).endObject().endArray().key("judgeLineMoveEvents").array().object().key("startTime").value(-999999).key("endTime").value(100000000).key("start").value(0.5).key("end").value(0.5).key("start2").value(position / 450.0 * 0.5 + 0.5).key("end2").value(position / 450.0 * 0.5 + 0.5).endObject().endArray();
 					js.key("judgeLineRotateEvents").array().object().key("startTime").value(-999999).key("endTime").value(100000000).key("start").value(0.0).key("end").value(0.0).endObject().endArray().endObject().endArray().endObject();
 					File output = new File(path.getPath() + File.separator + String.valueOf(seed) + ".json");
 					File info = new File(path.getPath() + File.separator + "info.txt");
@@ -621,7 +621,7 @@ public class Functions {
 						}
 						zis.close();
 					}
-					doZip(path.getAbsolutePath(), dir.getAbsolutePath() + File.separator + file.getName() + ".pez");
+					doZip(path.getAbsolutePath(), dir.getAbsolutePath() + File.separator + file.getName().substring(0, file.getName().lastIndexOf(".")) + ".pez");
 				}
 			}
 			if (deleteConverted) for (File f : MainActivity.charts) f.delete();

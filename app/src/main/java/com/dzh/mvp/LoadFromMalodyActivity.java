@@ -7,6 +7,8 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
@@ -26,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import android.view.MenuItem;
 
 public class LoadFromMalodyActivity extends AppCompatActivity {
 	public ProgressDialog loading;
@@ -180,6 +183,26 @@ public class LoadFromMalodyActivity extends AppCompatActivity {
 			}
 		, "init").start();
 		loading.show();
+	}
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		MenuInflater mi = new MenuInflater(this);
+		mi.inflate(R.menu.load_from_malody, menu);
+		return super.onCreateOptionsMenu(menu);
+	}
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		try {
+			switch (item.getItemId()) {
+				case R.id.filter:
+					AlertDialog.Builder adb = new AlertDialog.Builder(this);
+					adb.setIcon(R.drawable.ic_filter_outline);
+					break;
+			}
+		} catch (Exception e) {
+			catcher(e);
+		}
+		return super.onOptionsItemSelected(item);
 	}
 	public void catcher(final Exception e) {
 		final StringWriter sw = new StringWriter();

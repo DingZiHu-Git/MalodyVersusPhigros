@@ -6,13 +6,15 @@
 		android:showAsAction="ifRoom|withText"
 		android:id="@+id/save_prop"
 		android:icon="@drawable/ic_content_save_outline"
-		android:title="保存配置"/>
+		android:title="保存配置"
+		android:tint="#FFFFFF"/>
 	
 	<item
 		android:showAsAction="ifRoom|withText"
 		android:id="@+id/clear_tmp"
 		android:icon="@drawable/ic_trash_empty"
-		android:title="清空已加载谱面"/>
+		android:title="清空已加载谱面"
+		android:tint="#FFFFFF"/>
 	
     <item
         android:id="@+id/settings"

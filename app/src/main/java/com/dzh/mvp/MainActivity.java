@@ -34,7 +34,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.documentfile.provider.DocumentFile;
-import com.dzh.mvp.R;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -93,8 +92,6 @@ public class MainActivity extends AppCompatActivity {
 			final EditText speed = findViewById(R.id.speed);
 			final EditText position = findViewById(R.id.position);
 			final EditText illustrator = findViewById(R.id.illustrator);
-			Button speedTool = findViewById(R.id.speed_tool);
-			Button typeTool = findViewById(R.id.type_tool);
 			if (!settings.exists()) {
 				settings.getParentFile().mkdirs();
 				settings.createNewFile();
@@ -342,182 +339,6 @@ public class MainActivity extends AppCompatActivity {
 			luck.setChecked(jo.getBoolean("luck"));
 			speed.setText(String.valueOf(jo.getDouble("default_speed")));
 			position.setText(String.valueOf(jo.getDouble("default_position")));
-			speedTool.setOnClickListener(new View.OnClickListener(){
-					@Override
-					public void onClick(View v) {
-						if (chartList.isEmpty()) Toast.makeText(MainActivity.this, "请先加载一张Phigros谱面！", Toast.LENGTH_SHORT).show();
-						else {
-							AlertDialog.Builder adb = new AlertDialog.Builder(MainActivity.this);
-							final EditText et = new EditText(MainActivity.this);
-							et.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
-							et.setText("1.0");
-							adb.setTitle("谱面流速工具 v1.1").setMessage("请输入谱面流速更改的倍率（例如输入2.0会使谱面流速变为原来的2倍）：").setView(et).setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-									@Override
-									public void onClick(DialogInterface dialog, int which) {
-										new Thread(new Runnable() {
-												@Override
-												public void run() {
-													try {
-														for (Map<String, Object> m : chartList) {
-															boolean checked = m.get("checked");
-															if (checked && ((String) m.get("name")).toLowerCase().endsWith(".json")) {
-																File f = new File(temp.getAbsolutePath() + File.separator + m.get("name"));
-																BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(f), "UTF-8"));
-																String json = "";
-																String line = null;
-																while ((line = reader.readLine()) != null) json += line;
-																JSONObject main = new JSONObject(json);
-																if (main.has("formatVersion")) {
-																	JSONArray lineList = main.getJSONArray("judgeLineList");
-																	for (int i = 0; i < lineList.length(); i++) {
-																		JSONObject obj = lineList.getJSONObject(i);
-																		JSONArray notesAbove = obj.getJSONArray("notesAbove");
-																		JSONArray notesBelow = obj.getJSONArray("notesBelow");
-																		JSONArray speedEvents = obj.getJSONArray("speedEvents");
-																		for (int j = 0; j < notesAbove.length(); j++) {
-																			JSONObject note = notesAbove.getJSONObject(j);
-																			notesAbove.put(note.getInt("type") == 3 ? note.put("speed", note.getDouble("speed") * Double.valueOf(et.getText().toString())).put("floorPosition", note.getDouble("floorPosition") * Double.valueOf(et.getText().toString())) : note.put("floorPosition", note.getDouble("floorPosition") * Double.valueOf(et.getText().toString())));
-																		}
-																		obj.put("notesAbove", notesAbove);
-																		for (int j = 0; j < notesBelow.length(); j++) {
-																			JSONObject note = notesBelow.getJSONObject(j);
-																			notesAbove.put(note.getInt("type") == 3 ? note.put("speed", note.getDouble("speed") * Double.valueOf(et.getText().toString())).put("floorPosition", note.getDouble("floorPosition") * Double.valueOf(et.getText().toString())) : note.put("floorPosition", note.getDouble("floorPosition") * Double.valueOf(et.getText().toString())));
-																		}
-																		obj.put("notesBelow", notesBelow);
-																		for (int j = 0; j < speedEvents.length(); j++) speedEvents.put(j, speedEvents.getJSONObject(j).put("value", speedEvents.getJSONObject(j).getDouble("value") * Double.valueOf(et.getText().toString())));
-																		main.getJSONArray("judgeLineList").put(i, obj.put("speedEvents", speedEvents));
-																	}
-																} else if (main.has("META") && main.getJSONObject("META").has("RPEVersion")) {
-																	JSONArray judgeLineList = main.getJSONArray("judgeLineList");
-																	for (int i = 0; i < judgeLineList.length() - 1; i++) {
-																		JSONArray eventLayers = judgeLineList.getJSONObject(i).getJSONArray("eventLayers");
-																		for (int j = 0; j < eventLayers.length() - 1; j++) {
-																			JSONArray speedEvents = eventLayers.getJSONObject(j).getJSONArray("speedEvents");
-																			for (int k = 0; k < speedEvents.length() - 1; k++) speedEvents.put(k, speedEvents.getJSONObject(k).put("end", speedEvents.getJSONObject(k).getDouble("end") * Double.parseDouble(et.getText().toString())).put("start", speedEvents.getJSONObject(k).getDouble("start") * Double.parseDouble(et.getText().toString())));
-																			eventLayers.put(j, eventLayers.getJSONObject(j).put("speedEvents", speedEvents));
-																		}
-																		judgeLineList.put(i, judgeLineList.getJSONObject(i).put("eventLayers", eventLayers));
-																	}
-																	main.put("judgeLineList", judgeLineList);
-																}
-																BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(f, false), "UTF-8"));
-																writer.write(main.toString());
-																writer.close();
-																doZip(temp.getAbsolutePath(), dir.getAbsolutePath() + File.separator + f.getName() + ".pez");
-															}
-														}
-														loading.cancel();
-														runOnUiThread(new Runnable() {
-																@Override
-																public void run() {
-																	Toast.makeText(MainActivity.this, "谱面修改完成！请到" + dir.getAbsolutePath() + "寻找您的谱面！", Toast.LENGTH_LONG).show();
-																}
-															}
-														);
-													} catch (Exception e) {
-														catcher(e);
-													}
-												}
-											}
-										, "speedTool").start();
-										loading.show();
-									}
-								}
-							).setNegativeButton(R.string.cancel, null).setCancelable(false).show();
-						}
-					}
-				}
-			);
-			typeTool.setOnClickListener(new View.OnClickListener() {
-					@Override
-					public void onClick(View v) {
-						if (chartList.isEmpty()) {
-							Toast.makeText(MainActivity.this, "请先加载一张谱面！", Toast.LENGTH_SHORT).show();
-							return;
-						}
-						LinearLayout ll = new LinearLayout(MainActivity.this);
-						LinearLayout ll1 = new LinearLayout(MainActivity.this);
-						LinearLayout ll2 = new LinearLayout(MainActivity.this);
-						LinearLayout ll3 = new LinearLayout(MainActivity.this);
-						LinearLayout ll4 = new LinearLayout(MainActivity.this);
-						TextView tv1 = new TextView(MainActivity.this);
-						TextView tv2 = new TextView(MainActivity.this);
-						TextView tv3 = new TextView(MainActivity.this);
-						TextView tv4 = new TextView(MainActivity.this);
-						final Spinner s1 = new Spinner(MainActivity.this);
-						final Spinner s2 = new Spinner(MainActivity.this);
-						final Spinner s3 = new Spinner(MainActivity.this);
-						final Spinner s4 = new Spinner(MainActivity.this);
-						final EditText et = new EditText(MainActivity.this);
-						SpinnerAdapter sa = new ArrayAdapter<String>(MainActivity.this, android.R.layout.simple_spinner_dropdown_item, new String[]{ "Tap", "Hold", "Flick", "Drag" });
-						tv1.setText("Tap→");
-						tv1.setTextSize(14);
-						tv1.setTextAppearance(android.R.style.TextAppearance_Large);
-						tv2.setText("Hold→");
-						tv2.setTextSize(14);
-						tv2.setTextAppearance(android.R.style.TextAppearance_Large);
-						tv3.setText("Flick→");
-						tv3.setTextSize(14);
-						tv3.setTextAppearance(android.R.style.TextAppearance_Large);
-						tv4.setText("Drag→");
-						tv4.setTextSize(14);
-						tv4.setTextAppearance(android.R.style.TextAppearance_Large);
-						s1.setAdapter(sa);
-						s2.setAdapter(sa);
-						s3.setAdapter(sa);
-						s4.setAdapter(sa);
-						s1.setSelection(0);
-						s2.setSelection(1);
-						s3.setSelection(2);
-						s4.setSelection(3);
-						et.setHint("音符间隔");
-						et.setEms(100);
-						ll1.setOrientation(LinearLayout.HORIZONTAL);
-						ll1.addView(tv1);
-						ll1.addView(s1);
-						ll2.setOrientation(LinearLayout.HORIZONTAL);
-						ll2.addView(tv2);
-						ll2.addView(s2);
-						ll2.addView(et);
-						ll3.setOrientation(LinearLayout.HORIZONTAL);
-						ll3.addView(tv3);
-						ll3.addView(s3);
-						ll4.setOrientation(LinearLayout.HORIZONTAL);
-						ll4.addView(tv4);
-						ll4.addView(s4);
-						ll.setOrientation(LinearLayout.VERTICAL);
-						ll.addView(ll1);
-						ll.addView(ll2);
-						ll.addView(ll3);
-						ll.addView(ll4);
-						AlertDialog.Builder adb = new AlertDialog.Builder(MainActivity.this);
-						adb.setTitle("音符类型工具").setMessage("在下方批量修改音符类型（修改为本身即为不修改）：").setView(ll).setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-								@Override
-								public void onClick(DialogInterface dialog, int which) {
-									final int tap = s1.getSelectedItemPosition();
-									final int hold = s2.getSelectedItemPosition();
-									final Fraction interval = new Fraction(et.getText().toString());
-									final int flick = s3.getSelectedItemPosition();
-									final int drag = s4.getSelectedItemPosition();
-									new Thread(new Runnable() {
-											@Override
-											public void run() {
-												try {
-													
-													loading.cancel();
-												} catch (Exception e) {
-													catcher(e);
-												}
-											}
-										}
-									, "typeTool").start();
-									loading.show();
-								}
-							}
-						).setNegativeButton(R.string.cancel, null).setCancelable(false).show();
-					}
-				}
-			);
 			new Thread(new Runnable() {
 					@Override
 					public void run() {

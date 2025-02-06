@@ -441,17 +441,10 @@
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content">
 
-				<Button
+				<TextView
 					android:layout_width="wrap_content"
 					android:layout_height="wrap_content"
-					android:text="谱面流速工具"
-					android:id="@+id/speed_tool"/>
-
-				<Button
-					android:layout_width="wrap_content"
-					android:layout_height="wrap_content"
-					android:text="音符类型工具"
-					android:id="@+id/type_tool"/>
+					android:text="这里暂时什么也没有哦~"/>
 
 			</LinearLayout>
 
@@ -463,7 +456,7 @@
 			<TextView
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
-				android:text="注：除了Key、Catch、Taiko和Slide以外模式的谱面将会被跳过。Key转Slide功能和随机下落方向功能暂不支持osu!mania谱面。想转出来Flick的话需要用Malody V在Wipe键上点一下Flick。请确保您手机预留的运行内存充足（至少1GB）！"
+				android:text="注：除了Key、Catch、Taiko和Slide以外模式的谱面将会被跳过。Key转Slide功能和随机下落方向功能暂不支持osu!mania谱面。想转出来Flick的话需要用Malody V在Wipe键上点一下Flick。请确保您手机预留的运行内存充足！"
 				android:padding="10dp"/>
 
 		</LinearLayout>
